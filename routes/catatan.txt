@@ -1,0 +1,5 @@
+Dari Azka
+
+Bagian Routing, ane pisahkan mana yang bagian antum dan ane.
+Jadi kalau mau bikin perubahan, ubah bagian antum aja dulu.
+Ntar kalau udah jadi bagian antum dan ane, baru hubungkan.

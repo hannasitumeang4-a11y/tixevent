@@ -1,0 +1,8 @@
+Dari Azka
+
+Bagian resources/views/..... ini seharusnya adalah bagian frontend.
+backend harusnya ga disini, ini mencampur kerja antum dan ane.
+
+Jadi biar mudah, ane anggap folder events ini sebagai testing code.
+Ane bikin tampilan frontend di file lain, 
+nanti antum sambungkan logikanya ke file itu
