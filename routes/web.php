@@ -12,6 +12,7 @@ use App\Http\Controllers\AdminController;
 */
 
 Route::get('/', [PageController::class, 'home'])->name('home');
+Route::get('/events/{id}', [PageController::class, 'detail'])->name('events.detail');
 Route::get('/history', [PageController::class, 'history'])->name('history');
 Route::get('/checkout', [PageController::class, 'checkout'])->name('checkout');
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Event;
+use App\Models\Category;
 
 class PageController extends Controller
 {
@@ -11,11 +12,25 @@ class PageController extends Controller
     //  ZONA FRONTEND
     // ==========================================
 
-    public function home()
+    public function home(Request $request)
     {
-        // UI Bersih tanpa intervensi filter backend
-        $events = Event::latest()->take(6)->get();
-        return view('pages.home', compact('events'));
+        // Dengan filter kategori dari backend
+        $query = Event::query();
+        
+        if ($request->category && $request->category != 'all') {
+            $query->where('category_id', $request->category);
+        }
+        
+        $events = $query->latest()->take(8)->get();
+        $categories = Category::all();
+        
+        return view('pages.home', compact('events', 'categories'));
+    }
+    
+    public function detail($id)
+    {
+        $event = Event::with('category')->findOrFail($id);
+        return view('pages.detail', compact('event'));
     }
 
     public function history()
@@ -42,7 +57,14 @@ class PageController extends Controller
     public function dashboard()
     {
         $totalEvent = Event::count();
-        return view('admin.dashboard', compact('totalEvent'));
+        $totalOrders = 136; // Placeholder - bisa hubungkan ke model Order jika ada
+        $totalRevenue = 45250000; // Placeholder
+        $totalUsers = 128; // Placeholder
+        
+        $recentOrders = []; // Placeholder - bisa hubungkan ke model Order
+        $recentEvents = Event::latest()->take(3)->get();
+        
+        return view('admin.dashboard', compact('totalEvent', 'totalOrders', 'totalRevenue', 'totalUsers', 'recentOrders', 'recentEvents'));
     }
 
 
@@ -59,10 +81,12 @@ class PageController extends Controller
             $query->where('category_id', $request->category);
         }
 
-        $events = $query->latest()->get();
+        $events = $query->latest()->paginate(10);
+
+        $categories = Category::all();
 
         // Mengarah ke folder: views/pages_testing/home.blade.php
-        return view('pages_testing.home', compact('events'));
+        return view('pages_testing.home', compact('events', 'categories'));
     }
 
     public function eventDetailTesting($id)
