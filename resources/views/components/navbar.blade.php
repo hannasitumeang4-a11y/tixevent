@@ -11,11 +11,28 @@
             class="border rounded px-4 py-2 w-80"
         >
 
-        <a href="{{ route('login') }}" class="text-sm">Login</a>
+        {{-- TAMBAHAN AUTH CHECK --}}
+        @guest
+            <a href="{{ route('login') }}" class="text-sm">Login</a>
 
-        <a href="{{ route('register') }}" class="bg-black text-white px-4 py-2 rounded text-sm">
-            Register
-        </a>
+            <a href="{{ route('register') }}" class="bg-black text-white px-4 py-2 rounded text-sm">
+                Register
+            </a>
+        @endguest
+
+        @auth
+            <span class="text-sm">
+                Halo, {{ auth()->user()->name }}
+            </span>
+
+            <form action="{{ route('logout') }}" method="POST">
+                @csrf
+                <button class="bg-red-500 text-white px-4 py-2 rounded text-sm">
+                    Logout
+                </button>
+            </form>
+        @endauth
+        {{-- END TAMBAHAN --}}
     </div>
 
 </div>

@@ -15,7 +15,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role_id'
+        'role' // ✅ FIX: dari role_id jadi role
     ];
 
     protected $hidden = [
@@ -23,10 +23,8 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    public function role()
-    {
-        return $this->belongsTo(Role::class);
-    }
+    // ❌ HAPUS relasi role karena tidak pakai tabel roles
+    // public function role() { ... }
 
     public function events()
     {

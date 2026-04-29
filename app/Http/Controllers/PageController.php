@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Event;
 use App\Models\Category;
+use App\Models\User;
 
 class PageController extends Controller
 {
@@ -14,7 +15,6 @@ class PageController extends Controller
 
     public function home(Request $request)
     {
-        // Dengan filter kategori dari backend
         $query = Event::query();
         
         if ($request->category && $request->category != 'all') {
@@ -53,28 +53,50 @@ class PageController extends Controller
         return view('auth.register');
     }
 
-    // Halaman Admin (UI)
+    // ==========================================
+    // ADMIN UI
+    // ==========================================
+
     public function dashboard()
     {
         $totalEvent = Event::count();
-        $totalOrders = 136; // Placeholder - bisa hubungkan ke model Order jika ada
-        $totalRevenue = 45250000; // Placeholder
-        $totalUsers = 128; // Placeholder
+        $totalOrders = 136;
+        $totalRevenue = 45250000;
+        $totalUsers = User::count();
         
-        $recentOrders = []; // Placeholder - bisa hubungkan ke model Order
+        $recentOrders = [];
         $recentEvents = Event::latest()->take(3)->get();
         
-        return view('admin.dashboard', compact('totalEvent', 'totalOrders', 'totalRevenue', 'totalUsers', 'recentOrders', 'recentEvents'));
+        return view('admin.dashboard', compact(
+            'totalEvent',
+            'totalOrders',
+            'totalRevenue',
+            'totalUsers',
+            'recentOrders',
+            'recentEvents'
+        ));
     }
 
+    public function usermanage()
+    {
+        $users = User::latest()->get(); // 🔥 ambil user dari DB
+        return view('admin.usermanage', compact('users'));
+    }
+
+    public function eventmanage()
+    {
+        $events = Event::latest()->get(); // 🔥 ambil event
+        $categories = Category::all();
+
+        return view('admin.eventmanage', compact('events', 'categories'));
+    }
 
     // ==========================================
-    // ZONA BACKEND (LABORATORIUM / TESTING)
+    // TESTING
     // ==========================================
 
     public function homeTesting(Request $request)
     {
-        // Tempat backend bereksperimen filter & logic
         $query = Event::query();
 
         if ($request->category && $request->category != 'all') {
@@ -82,17 +104,14 @@ class PageController extends Controller
         }
 
         $events = $query->latest()->paginate(10);
-
         $categories = Category::all();
 
-        // Mengarah ke folder: views/pages_testing/home.blade.php
         return view('pages_testing.home', compact('events', 'categories'));
     }
 
     public function eventDetailTesting($id)
     {
         $event = Event::findOrFail($id);
-        // Mengarah ke folder: views/events_testing/show.blade.php
         return view('events_testing.show', compact('event'));
     }
 }
