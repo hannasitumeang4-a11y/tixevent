@@ -9,33 +9,27 @@ use App\Models\User;
 
 class PageController extends Controller
 {
-    // ==========================================
-    //  ZONA FRONTEND
-    // ==========================================
-
     public function home(Request $request)
     {
-        $query = Event::query();
+        $categories = Category::all();
+        $query = Event::with(['category', 'images']);
         
         if ($request->category && $request->category != 'all') {
             $query->where('category_id', $request->category);
         }
         
-        $events = $query->latest()->take(8)->get();
-        $categories = Category::all();
+        $events = $query->where('status', 'published')
+                        ->latest()
+                        ->take(8)
+                        ->get();
         
         return view('pages.home', compact('events', 'categories'));
     }
-    
+
     public function detail($id)
     {
-        $event = Event::with('category')->findOrFail($id);
+        $event = Event::with(['category', 'images'])->findOrFail($id);
         return view('pages.detail', compact('event'));
-    }
-
-    public function history()
-    {
-        return view('pages.history');
     }
 
     public function checkout()
@@ -43,75 +37,38 @@ class PageController extends Controller
         return view('pages.checkout');
     }
 
-    public function login()
+    /**
+     * Memproses data dari form checkout
+     */
+    public function processPayment(Request $request)
     {
-        return view('auth.login');
-    }
+        // Validasi data yang masuk
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'phone' => 'required',
+            'payment_method' => 'required',
+        ]);
 
-    public function register()
-    {
-        return view('auth.register');
-    }
-
-    // ==========================================
-    // ADMIN UI
-    // ==========================================
-
-    public function dashboard()
-    {
-        $totalEvent = Event::count();
-        $totalOrders = 136;
-        $totalRevenue = 45250000;
-        $totalUsers = User::count();
+        // LOGIKA: Di sini kamu nantinya bisa menyimpan data ke tabel 'transactions'
+        // Untuk sekarang, kita asumsikan berhasil dan lempar ke halaman sukses.
         
-        $recentOrders = [];
-        $recentEvents = Event::latest()->take(3)->get();
-        
-        return view('admin.dashboard', compact(
-            'totalEvent',
-            'totalOrders',
-            'totalRevenue',
-            'totalUsers',
-            'recentOrders',
-            'recentEvents'
-        ));
+        return redirect()->route('payment.success');
     }
 
-    public function usermanage()
+    /**
+     * Menampilkan halaman sukses
+     */
+    public function success()
     {
-        $users = User::latest()->get(); // 🔥 ambil user dari DB
-        return view('admin.usermanage', compact('users'));
+        return view('pages.success');
     }
 
-    public function eventmanage()
-    {
-        $events = Event::latest()->get(); // 🔥 ambil event
-        $categories = Category::all();
-
-        return view('admin.eventmanage', compact('events', 'categories'));
-    }
-
-    // ==========================================
-    // TESTING
-    // ==========================================
-
-    public function homeTesting(Request $request)
-    {
-        $query = Event::query();
-
-        if ($request->category && $request->category != 'all') {
-            $query->where('category_id', $request->category);
-        }
-
-        $events = $query->latest()->paginate(10);
-        $categories = Category::all();
-
-        return view('pages_testing.home', compact('events', 'categories'));
-    }
-
-    public function eventDetailTesting($id)
-    {
-        $event = Event::findOrFail($id);
-        return view('events_testing.show', compact('event'));
-    }
+    // Stub fungsi agar route admin tidak error
+    public function dashboard() { return view('admin.dashboard'); }
+    public function usermanage() { return view('admin.users'); }
+    public function eventmanage() { return view('admin.events'); }
+    public function history() { return view('pages.history'); }
+    public function login() { return view('auth.login'); }
+    public function register() { return view('auth.register'); }
 }
