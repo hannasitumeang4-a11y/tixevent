@@ -9,7 +9,7 @@
         <a href="#" class="block px-3 py-2 rounded hover:bg-gray-700">Review</a>
         <a href="#" class="block px-3 py-2 rounded hover:bg-gray-700">Laporan</a>
 
-        <!-- 🔥 FIX LOGOUT -->
+        <!-- LOGOUT -->
         <form action="{{ route('logout') }}" method="POST">
             @csrf
             <button type="submit" class="w-full text-left px-3 py-2 rounded hover:bg-gray-700">

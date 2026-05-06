@@ -18,7 +18,6 @@
 
 </div>
 
-<!-- 🔥 TAMBAHAN (BIAR LOGOUT BISA JALAN DARI <a>) -->
 <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
     @csrf
 </form>

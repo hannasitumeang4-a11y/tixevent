@@ -1,7 +1,7 @@
 <div class="border-b px-6 py-4 flex items-center justify-between">
     
-    <div class="font-bold text-lg">
-        Eventix
+    <div class="flex items-center">
+        <img src="{{ asset('assets/img/events/logo-tixevent.png') }}" alt="Eventix Logo" class="h-8">
     </div>
 
     <div class="flex items-center gap-4">

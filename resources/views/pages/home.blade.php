@@ -4,27 +4,81 @@
 <div class="container mx-auto px-4">
 
     <!-- Hero Section -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-b pb-10 items-center mt-6">
-        <div>
-            <h1 class="text-4xl md:text-5xl font-bold leading-tight text-indigo-900">
-                Temukan Event Seru <br> Untukmu
-            </h1>
-            <p class="mt-4 text-gray-600 text-lg">
-                Berbagai event menarik menantimu.<br>
-                Pesan tiket sekarang sebelum kehabisan!
-            </p>
-            <a href="#event-list" class="inline-block mt-6 bg-indigo-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-indigo-700 transition shadow-lg">
-                Jelajahi Event
-            </a>
-        </div>
+    <div class="relative border-b pb-10 mt-6">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="relative overflow-hidden rounded-[2rem] shadow-2xl">
+                <div id="heroCarousel" class="flex items-center gap-5 px-[8%] transition-transform duration-500 ease-out will-change-transform">
+                    <div class="flex-shrink-0 w-[84%] sm:w-[84%] lg:w-[84%] rounded-[2rem] overflow-hidden bg-gray-100">
+                        <img src="{{ asset('assets/img/events/banner-hero-all.jpg') }}" alt="Banner Semua Event" class="w-full h-auto object-contain">
+                    </div>
+                    <div class="flex-shrink-0 w-[84%] sm:w-[84%] lg:w-[84%] rounded-[2rem] overflow-hidden bg-gray-100">
+                        <img src="{{ asset('assets/img/events/banner-concert.jpg') }}" alt="Banner Concert" class="w-full h-auto object-contain">
+                    </div>
+                    <div class="flex-shrink-0 w-[84%] sm:w-[84%] lg:w-[84%] rounded-[2rem] overflow-hidden bg-gray-100">
+                        <img src="{{ asset('assets/img/events/banner-seminar.jpg') }}" alt="Banner Seminar" class="w-full h-auto object-contain">
+                    </div>
+                    <div class="flex-shrink-0 w-[84%] sm:w-[84%] lg:w-[84%] rounded-[2rem] overflow-hidden bg-gray-100">
+                        <img src="{{ asset('assets/img/events/banner-workshop.jpg') }}" alt="Banner Workshop" class="w-full h-auto object-contain">
+                    </div>
+                </div>
+            </div>
 
-        <!-- Banner Visual -->
-        <div class="bg-gradient-to-br from-indigo-500 to-purple-600 h-64 rounded-2xl flex flex-col items-center justify-center shadow-xl text-white">
-            <span class="text-6xl mb-2">🚀</span>
-            <span class="text-xl font-bold">Eventix Platform</span>
-            <p class="text-indigo-100 text-sm">Cari, Pesan, Hadiri.</p>
+            <button id="heroPrev" class="absolute left-5 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/95 text-gray-800 shadow-lg w-12 h-12 flex items-center justify-center transition hover:bg-white">
+                <span class="text-2xl">‹</span>
+            </button>
+            <button id="heroNext" class="absolute right-5 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/95 text-gray-800 shadow-lg w-12 h-12 flex items-center justify-center transition hover:bg-white">
+                <span class="text-2xl">›</span>
+            </button>
+
+            <div class="mt-5 flex justify-center gap-2">
+                <button type="button" data-slide="0" class="hero-dot w-3 h-3 rounded-full bg-indigo-600"></button>
+                <button type="button" data-slide="1" class="hero-dot w-3 h-3 rounded-full bg-white/80"></button>
+                <button type="button" data-slide="2" class="hero-dot w-3 h-3 rounded-full bg-white/80"></button>
+                <button type="button" data-slide="3" class="hero-dot w-3 h-3 rounded-full bg-white/80"></button>
+            </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const track = document.getElementById('heroCarousel');
+            const slides = Array.from(track.children);
+            const prev = document.getElementById('heroPrev');
+            const next = document.getElementById('heroNext');
+            const dots = Array.from(document.querySelectorAll('.hero-dot'));
+            let activeIndex = 0;
+            const gap = 20;
+
+            function updateSlider() {
+                const slideWidth = slides[0].getBoundingClientRect().width;
+                track.style.transform = `translateX(-${activeIndex * (slideWidth + gap)}px)`;
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('bg-indigo-600', index === activeIndex);
+                    dot.classList.toggle('bg-white/80', index !== activeIndex);
+                });
+            }
+
+            prev.addEventListener('click', function () {
+                activeIndex = (activeIndex - 1 + slides.length) % slides.length;
+                updateSlider();
+            });
+
+            next.addEventListener('click', function () {
+                activeIndex = (activeIndex + 1) % slides.length;
+                updateSlider();
+            });
+
+            dots.forEach(function (dot) {
+                dot.addEventListener('click', function () {
+                    activeIndex = Number(this.getAttribute('data-slide'));
+                    updateSlider();
+                });
+            });
+
+            window.addEventListener('resize', updateSlider);
+            updateSlider();
+        });
+    </script>
 
     <!-- Kategori Filter -->
     <div class="py-8 border-b" id="event-list">
