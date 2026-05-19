@@ -6,7 +6,7 @@
     <title>Eventix</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 text-sm text-gray-800">
+<body class="bg-gradient-to-br from-gray-100 to-indigo-50 text-sm text-gray-800">
 
 <div class="max-w-7xl mx-auto mt-6 bg-white border rounded shadow-sm">
 

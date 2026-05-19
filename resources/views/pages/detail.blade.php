@@ -1,93 +1,504 @@
 @extends('layouts.app')
 
 @section('content')
-<nav class="text-xs text-gray-500 mb-4">
-    <a href="{{ route('home') }}" class="hover:underline text-indigo-600">Home</a> /
-    <a href="#" class="hover:underline text-indigo-600">{{ $event->category->name ?? 'Event' }}</a> /
-    <span>{{ $event->title }}</span>
+
+<div class="container mx-auto px-4 py-8">
+
+<nav class="text-sm text-gray-500 mb-6 flex items-center gap-2">
+
+    <a href="{{ route('home') }}"
+    class="hover:text-indigo-600">
+
+        Home
+
+    </a>
+
+    <span>/</span>
+
+    <a href="#"
+    class="hover:text-indigo-600">
+
+        {{ $event->category->name ?? 'Event' }}
+
+    </a>
+
+    <span>/</span>
+
+    <span class="text-gray-700">
+
+        {{ $event->title }}
+
+    </span>
+
 </nav>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-    <!-- Gambar utama saja -->
-    <div>
-        <div class="bg-gray-200 h-64 md:h-96 rounded-xl flex items-center justify-center overflow-hidden border shadow-sm">
-            @php
-                // Mengambil gambar utama (primary)
-                $primaryImage = $event->images->where('is_primary', 1)->first() ?? $event->images->first();
-            @endphp
 
-            @if($primaryImage && file_exists(public_path($primaryImage->image_path)))
-                <img src="{{ asset($primaryImage->image_path) }}" alt="{{ $event->title }}" class="w-full h-full object-cover">
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+    <!-- GAMBAR EVENT -->
+    <div>
+
+        @php
+
+            $primaryImage =
+            $event->primaryImage
+            ?? $event->images->first();
+
+        @endphp
+
+
+        <div class="rounded-3xl overflow-hidden shadow-xl border">
+
+            @if($primaryImage)
+
+                <img
+                src="{{ asset($primaryImage->image_path) }}"
+                alt="{{ $event->title }}"
+                class="w-full h-[500px] object-cover hover:scale-105 duration-500">
+
             @else
-                <div class="text-center">
-                    <span class="text-6xl block">🎟️</span>
-                    <span class="text-xs text-gray-400">Gambar tidak tersedia</span>
+
+                <div class="h-[500px] bg-gradient-to-r from-indigo-100 to-purple-100 flex flex-col justify-center items-center">
+
+                    <div class="text-7xl">
+
+                        🎫
+
+                    </div>
+
+                    <div class="mt-3 text-gray-500">
+
+                        Gambar tidak tersedia
+
+                    </div>
+
                 </div>
+
             @endif
+
         </div>
-        {{-- Bagian galeri gambar kecil sudah dihapus dari sini --}}
+
     </div>
-    
-    <!-- Detail event -->
+
+
+
+
+    <!-- DETAIL EVENT -->
     <div>
-        <span class="inline-block bg-indigo-100 text-indigo-700 text-xs px-3 py-1 rounded-full mb-2 font-medium">
-            {{ $event->category->name ?? 'Uncategorized' }}
+
+        <span class="bg-indigo-100 text-indigo-600 px-4 py-2 rounded-full text-xs font-bold">
+
+            {{ $event->category->name ?? 'Event' }}
+
         </span>
-        <h1 class="text-2xl font-bold mb-2 text-gray-800">{{ $event->title }}</h1>
-        
-        <div class="flex flex-wrap items-center gap-4 text-gray-500 mb-3 text-sm">
-            <span class="flex items-center gap-1">📅 {{ $event->event_date ? \Carbon\Carbon::parse($event->event_date)->format('d M Y') : 'TBA' }}</span>
-            <span class="flex items-center gap-1">🕐 {{ $event->start_time ?? '09.00' }} - {{ $event->end_time ?? '16.00' }} WIB</span>
-        </div>
-        
-        <div class="mb-3 text-gray-500 flex items-center gap-1 text-sm">
-            <span>📍</span> {{ $event->location ?? 'Lokasi belum ditentukan' }}
-        </div>
-        
-        <p class="mb-6 text-gray-700 leading-relaxed">{{ $event->description ?? 'Deskripsi event belum tersedia.' }}</p>
 
-        <!-- Harga Utama -->
-        <div class="mb-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-5 border border-indigo-100/50">
-            <div class="text-sm text-gray-500">Harga mulai dari</div>
-            <div class="text-4xl font-black text-indigo-600">
-                {{ $event->price ? 'Rp' . number_format($event->price, 0, ',', '.') : 'Gratis' }}
+
+        <h1 class="text-4xl font-black mt-4 mb-3">
+
+            {{ $event->title }}
+
+        </h1>
+
+
+        <div class="flex flex-wrap gap-4 text-gray-500 mb-4">
+
+            <div class="bg-gray-100 px-4 py-2 rounded-xl">
+
+                📅
+
+                {{ $event->event_date
+                ? \Carbon\Carbon::parse(
+                $event->event_date
+                )->format('d M Y')
+                :'TBA' }}
+
             </div>
-        </div>
 
-        <div class="mb-6">
-            <h2 class="font-semibold mb-3 text-gray-800">Pilih Jenis Tiket</h2>
-            <div class="space-y-3">
-                <!-- VIP Ticket -->
-                <div class="flex items-center justify-between border-2 border-indigo-100 rounded-xl px-4 py-3 hover:border-indigo-300 transition bg-white shadow-sm">
-                    <div>
-                        <div class="font-bold text-gray-800">VIP</div>
-                        <div class="text-xs text-gray-500">Fasilitas: Kursi VIP, Lunch, Goodie Bag, Sertifikat</div>
-                        <div class="text-xs text-green-600 mt-1 font-medium">✓ Stok tersedia</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="font-bold text-lg text-indigo-600">Rp500.000</div>
-                        <button class="ml-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-bold">Pilih</button>
-                    </div>
-                </div>
-                <!-- Regular Ticket -->
-                <div class="flex items-center justify-between border border-gray-200 rounded-xl px-4 py-3 hover:border-gray-300 transition bg-white">
-                    <div>
-                        <div class="font-bold text-gray-800">REGULAR</div>
-                        <div class="text-xs text-gray-500">Fasilitas: Kursi Reguler, Sertifikat</div>
-                        <div class="text-xs text-green-600 mt-1 font-medium">✓ Stok tersedia</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="font-bold text-lg text-gray-700">{{ $event->price ? 'Rp' . number_format($event->price, 0, ',', '.') : 'Gratis' }}</div>
-                        <button class="ml-4 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition text-sm font-bold">Pilih</button>
-                    </div>
-                </div>
+
+            <div class="bg-gray-100 px-4 py-2 rounded-xl">
+
+                🕐
+
+                {{ $event->start_time }}
+
+                -
+
+                {{ $event->end_time }}
+
             </div>
+
         </div>
 
-        <div class="flex gap-3">
-            <a href="{{ route('home') }}" class="px-5 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-50 transition text-gray-700 font-bold text-sm">← Kembali</a>
-            <a href="{{ route('checkout') }}" class="flex-grow text-center px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg hover:opacity-90 transition font-bold shadow-md">Beli Tiket Sekarang</a>
+
+        <div class="bg-gray-100 p-4 rounded-xl mb-5">
+
+            📍
+
+            {{ $event->location }}
+
         </div>
+
+
+
+        <div class="leading-relaxed text-gray-700 mb-8">
+
+            {{ $event->description }}
+
+        </div>
+
+
+
+
+        <!-- HARGA -->
+
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-3xl p-6 mb-8 shadow-lg">
+
+            <div class="text-sm opacity-80">
+
+                Harga mulai dari
+
+            </div>
+
+
+            <div class="text-4xl font-black mt-1">
+
+                @if($event->tickets->count())
+
+                    Rp{{ number_format(
+
+                    $event->tickets->min('price'),
+
+                    0,
+
+                    ',',
+
+                    '.'
+
+                    ) }}
+
+                @else
+
+                    Gratis
+
+                @endif
+
+            </div>
+
+        </div>
+
+
+
+
+        <!-- TIKET -->
+
+        <div class="mb-8">
+
+            <h2 class="font-bold text-xl mb-4">
+
+                Pilih Jenis Tiket
+
+            </h2>
+
+
+
+            <div class="space-y-4">
+
+                @forelse($event->tickets as $ticket)
+
+                <div class="border rounded-2xl p-5 hover:shadow-lg transition">
+
+                    <div class="flex justify-between items-center">
+
+
+                        <div>
+
+                            <div class="font-bold text-xl">
+
+                                {{ $ticket->ticket_type }}
+
+                            </div>
+
+
+                            <div class="text-sm text-gray-500 mt-2">
+
+                                Stock:
+                                {{ $ticket->stock }}
+
+                            </div>
+
+
+                            <div class="text-sm text-gray-400">
+
+                                Maks beli:
+                                {{ $ticket->max_buy_per_order }}
+
+                            </div>
+
+
+                            @if($ticket->status=="available")
+
+                            <span class="inline-block mt-2 text-xs px-3 py-1 bg-green-100 text-green-700 rounded-full">
+
+                                Tersedia
+
+                            </span>
+
+                            @else
+
+                            <span class="inline-block mt-2 text-xs px-3 py-1 bg-red-100 text-red-600 rounded-full">
+
+                                Sold Out
+
+                            </span>
+
+                            @endif
+
+
+                        </div>
+
+
+
+
+                        <div class="text-right">
+
+                            <div class="font-black text-2xl text-indigo-600">
+
+                                Rp{{ number_format(
+
+                                $ticket->price,
+
+                                0,
+
+                                ',',
+
+                                '.'
+
+                                ) }}
+
+                            </div>
+
+
+                            @if($ticket->status=="available")
+
+                            <div class="flex gap-2 mt-3">
+
+                                <form
+                                action="{{route('cart.add')}}"
+                                method="POST">
+
+                                    @csrf
+
+                                    <input
+                                    type="hidden"
+                                    name="event_id"
+                                    value="{{$event->event_id}}">
+
+                                    <input
+                                    type="hidden"
+                                    name="ticket_id"
+                                    value="{{$ticket->event_ticket_id}}">
+
+                                    <button
+                                    class="bg-gray-100 px-4 py-3 rounded-xl">
+
+                                        🛒
+
+                                    </button>
+
+                                </form>
+
+
+                                <a
+                                href="{{route(
+                                'checkout',
+                                [
+                                'event'=>$event->event_id,
+                                'ticket'=>$ticket->event_ticket_id
+                                ]
+                                )}}"
+
+                                class="bg-indigo-600
+                                hover:bg-indigo-700
+                                px-6
+                                py-3
+                                rounded-xl
+                                text-white">
+
+                                Beli
+
+                                </a>
+
+                            </div>
+
+                            @else
+
+                            <button
+                            disabled
+                            class="mt-3 px-6 py-3 rounded-xl bg-gray-300 text-gray-500">
+
+                                Sold Out
+
+                            </button>
+
+                            @endif
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                @empty
+
+                <div class="bg-red-50 border border-red-200 p-6 rounded-2xl text-center">
+
+                    <div class="text-5xl">
+
+                        😔
+
+                    </div>
+
+                    <div class="font-bold mt-3 text-red-600">
+
+                        Tiket belum tersedia
+
+                    </div>
+
+                </div>
+
+                @endforelse
+
+            </div>
+
+        </div>
+
+
+
+        <!-- BUTTON -->
+
+        <div class="flex gap-4">
+
+            <a
+            href="{{ route('home') }}"
+            class="px-6 py-3 border rounded-xl">
+
+                ← Kembali
+
+            </a>
+
+
+            <a
+            href="#"
+            class="flex-1 bg-gray-100 text-gray-500 rounded-xl flex justify-center items-center">
+
+                Pilih tiket di atas
+
+            </a>
+
+        </div>
+
     </div>
+
 </div>
+
+</div>
+
+<hr class="my-16">
+
+<h2
+class="font-bold
+text-2xl
+mb-6">
+
+Event Serupa 🎉
+
+</h2>
+
+
+@php
+
+$relatedEvents = \App\Models\Event::where(
+    'category_id',
+    $event->category_id
+)
+->where(
+    'event_id',
+    '!=',
+    $event->event_id
+)
+->take(3)
+->get();
+
+@endphp
+
+
+<div
+class="grid
+md:grid-cols-3
+gap-5">
+
+@foreach($relatedEvents as $related)
+
+<a
+href="{{route(
+'events.detail',
+$related->event_id
+)}}"
+
+class="bg-white
+rounded-3xl
+shadow
+overflow-hidden">
+
+@php
+$image =
+$related
+->images
+->first();
+@endphp
+
+
+@if($image)
+
+<img
+src="{{asset(
+$image->image_path
+)}}"
+
+class="h-48
+w-full
+object-cover">
+
+@endif
+
+
+<div class="p-5">
+
+<div class="font-bold">
+
+{{$related->title}}
+
+</div>
+
+
+<div
+class="text-sm
+text-gray-500
+mt-2">
+
+📍
+
+{{$related->location}}
+
+</div>
+
+</div>
+
+</a>
+
+@endforeach
+
+</div>
+
 @endsection

@@ -4,17 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class EventImage extends Model
+class EventTicket extends Model
 {
-    protected $table='event_images';
-
-    protected $primaryKey='event_image_id';
+    protected $primaryKey='event_ticket_id';
 
     protected $fillable=[
+
         'event_id',
-        'image_path',
-        'is_primary'
+        'ticket_type',
+        'price',
+        'stock',
+        'max_buy_per_order',
+        'status'
+
     ];
+
 
     public function event()
     {
