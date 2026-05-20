@@ -29,6 +29,14 @@ class Event extends Model
     // ==========================================
 
     /**
+     * Relasi ke Tabel Users (Promotor / Organizer)
+     */
+    public function organizer()
+    {
+        return $this->belongsTo(User::class, 'organizer_id', 'user_id');
+    }
+
+    /**
      * Relasi ke Tabel Categories
      */
     public function category()

@@ -6,7 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ReviewController; 
 use App\Http\Controllers\OrganizerEventController; 
-use App\Http\Controllers\AdminController; // SINKRONISASI: Import AdminController
+use App\Http\Controllers\AdminController; 
 use App\Http\Middleware\IsOrganizer; 
 
 /*
@@ -70,13 +70,32 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN DASHBOARD MANAGEMENT (FIXED)
+| ADMIN DASHBOARD MANAGEMENT (FIXED & UPGRADED FOR CURATION)
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')->middleware('auth')->group(function(){
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/users', [PageController::class, 'usermanage'])->name('admin.usermanage');
     Route::get('/events', [PageController::class, 'eventmanage'])->name('admin.eventmanage');
+    
+    // ROUTE TAMBAHAN: Sistem Kurasi & Pengawasan Event oleh Admin
+    Route::patch('/events/{id}/publish', [PageController::class, 'publishEvent'])->name('admin.events.publish');
+    Route::patch('/events/{id}/reject', [PageController::class, 'rejectEvent'])->name('admin.events.reject');
+    Route::patch('/events/{id}/takedown', [PageController::class, 'takedownEvent'])->name('admin.events.takedown');
+
+    // FITUR MUTLAK: Otoritas Kontrol Akun Pengguna (Ubah Peran & Suspend)
+    Route::patch('/users/{id}/update-role', [PageController::class, 'updateUserRole'])->name('admin.users.update-role');
+    Route::patch('/users/{id}/toggle-status', [PageController::class, 'toggleUserStatus'])->name('admin.users.toggle-status');
+
+    // Otoritas Moderasi Ulasan Pengguna (Review Control Center)
+    Route::get('/reviews', [PageController::class, 'reviewmanage'])->name('admin.reviewmanage');
+    Route::delete('/reviews/{id}', [PageController::class, 'destroyReview'])->name('admin.reviews.destroy');
+
+    // BARU: Sistem Laporan Eksekutif Keuangan & Performa Proyek untuk Demo Dosen
+    Route::get('/reports', [PageController::class, 'reportmanage'])->name('admin.report');
+    
+    // 🚀 SINKRONISASI BARU: Jalur Unduh Dokumen Excel Laporan Admin
+    Route::get('/reports/export-excel', [PageController::class, 'exportExcel'])->name('admin.report.export-excel');
 });
 
 /*
@@ -89,7 +108,7 @@ Route::prefix('organizer')->middleware(['auth', IsOrganizer::class])->group(func
     Route::get('/events/create', [OrganizerEventController::class, 'create'])->name('organizer.events.create');
     Route::post('/events/store', [OrganizerEventController::class, 'store'])->name('organizer.events.store');
     
-    // ROUTE UNTUK EXPORT EXCEL
+    // ROUTE UNTUK EXPORT EXCEL ORGANIZER
     Route::get('/events/{id}/export-manifest', [OrganizerEventController::class, 'exportManifest'])->name('organizer.events.export');
     
     Route::get('/events/{id}/edit', [OrganizerEventController::class, 'edit'])->name('organizer.events.edit');

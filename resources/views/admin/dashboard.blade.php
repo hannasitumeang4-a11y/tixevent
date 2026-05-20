@@ -4,6 +4,36 @@
 
 <h1 class="text-xl font-bold mb-6 text-gray-800">Pusat Kendali Promotor</h1>
 
+@if(($reportedEventsCount ?? 0) > 0 || ($stuckTransactionsCount ?? 0) > 0)
+<div class="mb-6 space-y-2">
+    @if(($reportedEventsCount ?? 0) > 0)
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded shadow-sm flex items-center justify-between animate-pulse">
+            <div class="flex items-center space-x-3">
+                <span class="text-red-500 text-xl">⚠️</span>
+                <div>
+                    <h3 class="text-red-800 font-bold text-sm">Laporan Pelanggaran Event</h3>
+                    <p class="text-red-700 text-xs">Ada {{ $reportedEventsCount }} event yang dilaporkan oleh pengguna dan membutuhkan moderasi segera.</p>
+                </div>
+            </div>
+            <a href="{{ route('admin.events') }}" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded transition">Periksa</a>
+        </div>
+    @endif
+
+    @if(($stuckTransactionsCount ?? 0) > 0)
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded shadow-sm flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-amber-500 text-xl">⏳</span>
+                <div>
+                    <h3 class="text-amber-800 font-bold text-sm">Transaksi Menggantung (Stuck)</h3>
+                    <p class="text-amber-700 text-xs">Terdapat {{ $stuckTransactionsCount }} transaksi berstatus PENDING yang melewati batas waktu pembayaran.</p>
+                </div>
+            </div>
+            <a href="#tabel-verifikasi" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded transition">Lihat Log</a>
+        </div>
+    @endif
+</div>
+@endif
+
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg p-4 text-white shadow">
         <p class="text-indigo-100 text-sm">Total Event</p>
@@ -26,48 +56,86 @@
     </div>
 </div>
 
-<div class="mb-6 bg-white p-6 border rounded-lg shadow-sm">
-    <h2 class="font-bold text-gray-800 text-lg mb-4">🔮 Katalog Konser Aktif</h2>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
     
-    @if($myEvents->isEmpty())
-        <div class="text-center py-12 text-gray-400">
-            <p class="mb-3">Belum ada event yang terdaftar di sistem.</p>
-        </div>
-    @else
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach($myEvents as $event)
-            <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden p-4 text-white flex flex-col justify-between">
-                <div>
-                    <div class="w-full h-48 bg-slate-800 rounded-lg mb-3 overflow-hidden flex items-center justify-center text-3xl">
-                        @if($event->images && $event->images->first())
-                            <img src="{{ asset($event->images->first()->image_path) }}" class="w-full h-full object-cover">
-                        @else
-                            🎟️
-                        @endif
-                    </div>
-                    
-                    <span class="bg-blue-600/20 text-blue-400 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded">Rp{{ number_format($event->price, 0, ',', '.') }}</span>
-                    <h3 class="font-bold text-base mt-1 line-clamp-1 text-gray-100">{{ $event->title }}</h3>
-                    <p class="text-xs text-gray-400 mt-1 line-clamp-2">{{ strip_tags($event->description) }}</p>
-                    
-                    <div class="text-[11px] text-gray-400 mt-3 space-y-1 bg-slate-800/40 p-2 rounded-lg">
-                        <div>📅 {{ \Carbon\Carbon::parse($event->event_date)->format('d M Y') }}</div>
-                        <div class="truncate">📍 {{ $event->location }}</div>
-                    </div>
-                </div>
-
-                <div class="mt-4 flex gap-2 w-full">
-                    <a href="{{ route('organizer.events.show', $event->event_id) }}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs text-center font-semibold py-2 px-3 rounded-lg shadow transition duration-200">
-                        👥 Manifes
-                    </a>
-                    <a href="{{ route('organizer.events.edit', $event->event_id) }}" class="flex-1 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs text-center font-bold py-2 px-3 rounded-lg shadow transition duration-200">
-                        ⚙️ Atur Tiket
-                    </a>
-                </div>
+    <div id="tabel-verifikasi" class="lg:col-span-2 bg-white p-6 border rounded-lg shadow-sm flex flex-col justify-between">
+        <div>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-bold text-gray-800 text-lg flex items-center gap-2">⚡ Verifikasi Pembayaran Real-time</h2>
+                <span class="bg-amber-100 text-amber-800 text-xs font-semibold px-2 py-0.5 rounded-full">Butuh Tindakan</span>
             </div>
-            @endforeach
+
+            @if(empty($pendingPayments) || count($pendingPayments) == 0)
+                <div class="text-center py-16 text-gray-400">
+                    <p class="text-2xl mb-2">✅</p>
+                    <p class="text-sm">Semua bukti transfer bersih! Tidak ada antrean pembayaran saat ini.</p>
+                </div>
+            @else
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs whitespace-nowrap">
+                        <thead>
+                            <tr class="text-gray-500 border-b bg-gray-50">
+                                <th class="p-3">ID Order</th>
+                                <th class="p-3">Pembeli & Event</th>
+                                <th class="p-3">Bukti Transfer</th>
+                                <th class="p-3 text-center">Aksi / Otoritas</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach($pendingPayments as $payment)
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3 font-semibold text-gray-700">#{{ $payment->order_id }}</td>
+                                <td class="p-3">
+                                    <div class="font-medium text-gray-800">{{ $payment->user_name }}</div>
+                                    <div class="text-gray-400 text-[10px] truncate max-w-[180px]">{{ $payment->event_title }}</div>
+                                </td>
+                                <td class="p-3">
+                                    @if($payment->payment_proof)
+                                        <a href="{{ asset($payment->payment_proof) }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 font-medium inline-flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded border border-indigo-100 transition">
+                                            🔍 Lihat Bukti
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400 italic">Tidak ada bukti</span>
+                                    @endif
+                                </td>
+                                <td class="p-3 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <form action="{{ route('admin.orders.approve', $payment->order_id) }}" method="POST" onsubmit="return confirm('Setujui pembayaran ini? Tiket otomatis dikirim ke pembeli.')">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-3 rounded text-[11px] shadow transition">
+                                                Setujui
+                                            </button>
+                                        </form>
+                                        
+                                        <form action="{{ route('admin.orders.reject', $payment->order_id) }}" method="POST" onsubmit="return confirm('Tolak pembayaran ini jika bukti palsu/tidak valid?')">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-1.5 px-3 rounded text-[11px] border border-red-200 transition">
+                                                Tolak
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
         </div>
-    @endif
+    </div>
+
+    <div class="bg-white p-6 border rounded-lg shadow-sm flex flex-col justify-between">
+        <div>
+            <h2 class="font-bold text-gray-800 text-lg mb-1">📈 Grafik Omset Platform</h2>
+            <p class="text-gray-400 text-xs mb-4">Tren visual pendapatan penjualan tiket</p>
+            <div class="w-full relative" style="height: 220px;">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -141,5 +209,57 @@
     </div>
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        
+        // Data dummy atau data dari Laravel backend ($chartLabels & $chartData)
+        const labels = {!! json_encode($chartLabels ?? ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4']) !!};
+        const dataRevenue = {!! json_encode($chartData ?? [1200000, 4500000, 3100000, 9250000]) !!};
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Omset (Rp)',
+                    data: dataRevenue,
+                    borderColor: '#f59e0b', /* Warna amber menyesuaikan tema dashboard */
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#d97706'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'Rp ' + value.toLocaleString('id-ID');
+                            },
+                            font: { size: 9 }
+                        },
+                        grid: { color: '#f3f4f6' }
+                    },
+                    x: {
+                        ticks: { font: { size: 10 } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    });
+</script>
 
 @endsection

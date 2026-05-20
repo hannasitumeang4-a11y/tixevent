@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\EventTicket;
+use App\Models\Review;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -41,7 +42,7 @@ class PageController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%')
-                  ->orWhere('description', 'like', '%' . $request->search . '%');
+                ->orWhere('description', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -91,7 +92,7 @@ class PageController extends Controller
 
         $orders = Order::with(['event.category', 'ticket']) 
             ->where('user_id', $currentUserId)
-            ->orderBy('order_id', 'desc') // Diubah ke order_id karena kolom 'id' tidak ada
+            ->orderBy('order_id', 'desc')
             ->paginate(10);
 
         return view('pages.history', compact('orders'));
@@ -157,7 +158,6 @@ class PageController extends Controller
         $currentUserId = auth()->user()->user_id ?? auth()->id();
         $uniqueOrderCode = 'ORD-' . time() . rand(10, 99);
 
-        // Simpan data order baru
         DB::table('orders')->insert([
             'order_code' => $uniqueOrderCode,
             'user_id' => $currentUserId,
@@ -172,13 +172,9 @@ class PageController extends Controller
             'updated_at' => now()
         ]);
 
-        // Ambil data yang baru disimpan berdasarkan order_code unik
         $savedOrder = DB::table('orders')->where('order_code', $uniqueOrderCode)->first();
-        
-        // Menggunakan order_id sebagai key utama utama tabel orders kamu
         $actualOrderId = $savedOrder->order_id ?? $savedOrder->id ?? null;
 
-        // Hubungkan rincian data ke order_items
         try {
             DB::table('order_items')->insert([
                 'order_id' => $actualOrderId, 
@@ -216,22 +212,20 @@ class PageController extends Controller
 
         $currentUserId = auth()->user()->user_id ?? auth()->id();
 
-        // Cari data invoice murni menggunakan order_id & order_code (Bebas dari kolom 'id' palsu)
         $order = Order::with(['event', 'ticket'])
             ->where('user_id', $currentUserId)
             ->where(function($query) use ($id) {
                 $query->where('order_id', $id)
-                      ->orWhere('order_code', $id);
+                    ->orWhere('order_code', $id);
             })
             ->first();
 
-        // Jalur Cadangan Query Builder murni jika Model Eloquent bermasalah
         if (!$order) {
             $rawOrder = DB::table('orders')
                 ->where('user_id', $currentUserId)
                 ->where(function($query) use ($id) {
                     $query->where('order_id', $id)
-                          ->orWhere('order_code', $id);
+                        ->orWhere('order_code', $id);
                 })
                 ->first();
 
@@ -298,13 +292,288 @@ class PageController extends Controller
         ));
     }
 
-    public function usermanage()
+    public function usermanage(Request $request)
     {
-        return view('admin.users');
+        $userKey = (new User())->getKeyName();
+        $query = User::query();
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        $users = $query->orderBy($userKey, 'desc')->get();
+        return view('admin.usermanage', compact('users'));
     }
 
     public function eventmanage()
     {
-        return view('admin.events');
+        $events = Event::orderBy('created_at', 'desc')->get();
+        return view('admin.eventmanage', compact('events'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FITUR KURASI ADMIN (PUBLISH, REJECT, TAKE DOWN)
+    |--------------------------------------------------------------------------
+    |*/
+
+    public function publishEvent($id)
+    {
+        $event = Event::where('event_id', $id)->firstOrFail();
+        $event->status = 'published';
+        $event->save();
+
+        return redirect()->back()->with('success', 'Event "' . $event->title . '" berhasil diverifikasi dan ditayangkan!');
+    }
+
+    public function rejectEvent($id)
+    {
+        $event = Event::where('event_id', $id)->firstOrFail();
+        $event->status = 'rejected';
+        $event->save();
+
+        return redirect()->back()->with('with', 'Pendaftaran event telah ditolak.');
+    }
+
+    public function takedownEvent($id)
+    {
+        $event = Event::where('event_id', $id)->firstOrFail();
+        $event->status = 'draft'; 
+        $event->save();
+
+        return redirect()->back()->with('success', 'Event "' . $event->title . '" berhasil diturunkan paksa dari web utama!');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FITUR KONTROL PENGGUNA (UBAH ROLE & SUSPEND/BANNED ACCOUNT)
+    |--------------------------------------------------------------------------
+    |*/
+
+    public function updateUserRole(Request $request, $id)
+    {
+        $userKey = (new User())->getKeyName();
+        $user = User::where($userKey, $id)->firstOrFail();
+        
+        $request->validate([
+            'role' => 'required|in:admin,organizer,customer'
+        ]);
+
+        $user->role = $request->role;
+        $user->save();
+
+        return redirect()->back()->with('success', 'Peran/Role dari pengguna bernama "' . $user->name . '" berhasil diperbarui!');
+    }
+
+    public function toggleUserStatus($id)
+    {
+        $userKey = (new User())->getKeyName();
+        $user = User::where($userKey, $id)->firstOrFail();
+
+        $user->is_banned = $user->is_banned ? 0 : 1;
+        $user->save();
+
+        $statusMessage = $user->is_banned 
+            ? 'Akun milik "' . $user->name . '" telah berhasil ditangguhkan/BANNED!' 
+            : 'Akses login akun milik "' . $user->name . '" berhasil dipulihkan kembali.';
+
+        return redirect()->back()->with('success', $statusMessage);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | MODERASI REVIEW & TESTIMONI OLEH ADMIN
+    |--------------------------------------------------------------------------
+    |*/
+
+    public function reviewmanage()
+    {
+        $reviews = Review::with(['user', 'event'])->orderBy('created_at', 'desc')->get();
+        return view('admin.reviewmanage', compact('reviews'));
+    }
+
+    public function destroyReview($id)
+    {
+        $reviewKey = (new Review())->getKeyName();
+        $review = Review::where($reviewKey, $id)->firstOrFail();
+        $review->delete();
+
+        return redirect()->back()->with('success', 'Ulasan negatif atau spam berhasil dihapus oleh moderator admin!');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | BARU: SISTEM AGREGASI LAPORAN UNTUK DEMO APLIKASI (DOSEN/KELOMPOK)
+    |--------------------------------------------------------------------------
+    |*/
+
+    public function reportmanage()
+    {
+        // 1. Ambil seluruh riwayat transaksi sukses untuk tabel laporan keuangan utama
+        $allOrders = Order::with(['event', 'ticket', 'user'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Totalkan Keuangan global
+        $totalRevenue = $allOrders->sum('total_amount');
+        $totalTicketsSold = $allOrders->count();
+
+        // 2. LAPORAN PERFORMA EVENT: Event Terlaris (Paling Banyak Menyumbang Transaksi)
+        $topEvents = Order::select('event_id', DB::raw('count(*) as total_sales'), DB::raw('sum(total_amount) as revenue'))
+            ->groupBy('event_id')
+            ->orderBy('total_sales', 'desc')
+            ->with('event')
+            ->take(5)
+            ->get();
+
+        // 3. LAPORAN PERFORMA PROMOTOR: Promotor Paling Aktif Membuat Event
+        $topPromoters = Event::select('organizer_id', DB::raw('count(*) as total_events'))
+            ->groupBy('organizer_id')
+            ->orderBy('total_events', 'desc')
+            ->with(['organizer' => function($query) {
+                // Menghubungkan ke tabel user karena organizer_id merujuk pada user_id dengan peran promotor
+                $query->select('user_id', 'name', 'email');
+            }])
+            ->take(5)
+            ->get();
+
+        return view('admin.reportmanage', compact(
+            'allOrders', 'totalRevenue', 'totalTicketsSold', 'topEvents', 'topPromoters'
+        ));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | AKSI EKSPOR: MENGHASILKAN FILE SPREADSHEET EXCEL (.XLSX / .XLS)
+    |--------------------------------------------------------------------------
+    |*/
+    public function exportExcel()
+    {
+        // Ambil data transaksi keuangan global
+        $allOrders = Order::with(['event', 'ticket', 'user'])->orderBy('created_at', 'desc')->get();
+        $totalRevenue = $allOrders->sum('total_amount');
+        $totalTicketsSold = $allOrders->count();
+
+        // Ambil data Top 5 Event Terlaris
+        $topEvents = Order::select('event_id', DB::raw('count(*) as total_sales'), DB::raw('sum(total_amount) as revenue'))
+            ->groupBy('event_id')
+            ->orderBy('total_sales', 'desc')
+            ->with('event')
+            ->take(5)->get();
+
+        // Ambil data Top 5 Promotor Teraktif (Menggunakan relasi organizer untuk menghindari error)
+        $topPromoters = Event::select('organizer_id', DB::raw('count(*) as total_events'))
+            ->groupBy('organizer_id')
+            ->orderBy('total_events', 'desc')
+            ->with(['organizer' => function($query) {
+                $query->select('user_id', 'name', 'email');
+            }])
+            ->take(5)->get();
+
+        // Set instruksi Header agar dibaca sebagai file unduhan Excel oleh browser
+        header("Content-Type: application/vnd.ms-excel");
+        header("Content-Disposition: attachment; filename=Laporan_Eksekutif_TixEvent.xls");
+        header("Pragma: no-cache");
+        header("Expires: 0");
+
+        ?>
+        <h3>Pusat Laporan Eksekutif (Financial & Performance Report)</h3>
+        <p>Tanggal Unduh: <?= date('d-m-Y H:i') ?> WIB</p>
+        <br>
+
+        <table border="1" cellpadding="5">
+            <tr style="background-color: #e2e8f0; font-weight: bold;">
+                <th>Metrik Analisis Keuangan</th>
+                <th>Total Akumulasi Terhitung</th>
+            </tr>
+            <tr>
+                <td>Total Uang Masuk (Gross Revenue)</td>
+                <td><b>Rp<?= number_format($totalRevenue, 0, ',', '.') ?></b></td>
+            </tr>
+            <tr>
+                <td>Total Tiket Terjual (Volume Transaksi)</td>
+                <td><b><?= $totalTicketsSold ?> Tiket</b></td>
+            </tr>
+        </table>
+
+        <br><br>
+
+        <table border="1" cellpadding="5">
+            <thead>
+                <tr style="background-color: #1e3a8a; color: white; font-weight: bold;">
+                    <th colspan="3">🔥 Top 5 Event Terlaris (Sumbangsih Tertinggi)</th>
+                </tr>
+                <tr style="background-color: #f3f4f6; font-weight: bold;">
+                    <th>Nama Event</th>
+                    <th>Tiket Terjual</th>
+                    <th>Total Omset</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach($topEvents as $topEvent): ?>
+                <tr>
+                    <td><?= $topEvent->event->title ?? 'Event Dihapus' ?></td>
+                    <td align="center"><?= $topEvent->total_sales ?>x Transaksi</td>
+                    <td align="right">Rp<?= number_format($topEvent->revenue, 0, ',', '.') ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <br><br>
+
+        <table border="1" cellpadding="5">
+            <thead>
+                <tr style="background-color: #065f46; color: white; font-weight: bold;">
+                    <th colspan="3">🏢 Top 5 Promotor / Organizer Teraktif</th>
+                </tr>
+                <tr style="background-color: #f3f4f6; font-weight: bold;">
+                    <th>Nama Instansi / Akun</th>
+                    <th>Email Kontak</th>
+                    <th>Event Dibuat</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach($topPromoters as $promoter): ?>
+                <tr>
+                    <td><?= $promoter->organizer->name ?? 'Promotor Default' ?></td>
+                    <td><?= $promoter->organizer->email ?? 'N/A' ?></td>
+                    <td align="center"><?= $promoter->total_events ?> Event</td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <br><br>
+
+        <table border="1" cellpadding="5">
+            <thead>
+                <tr style="background-color: #374151; color: white; font-weight: bold;">
+                    <th colspan="6">📜 Journal Log Transaksi Real-time (Audit Trail)</th>
+                </tr>
+                <tr style="background-color: #f3f4f6; font-weight: bold;">
+                    <th>Kode Order</th>
+                    <th>Pembeli</th>
+                    <th>Konser & Tiket</th>
+                    <th>Metode</th>
+                    <th>Uang Masuk</th>
+                    <th>Waktu Berhasil</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach($allOrders as $order): ?>
+                <tr>
+                    <td>'<?= $order->order_code ?></td>
+                    <td><?= $order->user->name ?? 'Anonymous' ?> (<?= $order->user->email ?? '' ?>)</td>
+                    <td><?= $order->event->title ?? 'N/A' ?> - <?= $order->ticket->ticket_name ?? 'Regular' ?></td>
+                    <td align="center"><?= strtoupper($order->payment_method) ?></td>
+                    <td align="right">Rp<?= number_format($order->total_amount, 0, ',', '.') ?></td>
+                    <td align="center"><?= $order->created_at ? $order->created_at->format('d/m/Y H:i') : '-' ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        <?php
+        exit;
     }
 }
