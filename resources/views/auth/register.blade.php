@@ -26,6 +26,14 @@
         </div>
 
         <div class="mb-4">
+            <label class="block mb-1 text-sm font-semibold">Daftar Sebagai</label>
+            <select name="role" class="w-full border rounded px-4 py-2 bg-white" required>
+                <option value="customer" {{ old('role') == 'customer' ? 'selected' : '' }}>Customer (Pembeli Tiket)</option>
+                <option value="organizer" {{ old('role') == 'organizer' ? 'selected' : '' }}>Organizer (Penyelenggara Acara)</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
             <label class="block mb-1 text-sm">Password</label>
             <input type="password" name="password" class="w-full border rounded px-4 py-2" placeholder="Masukkan password Anda" required>
         </div>

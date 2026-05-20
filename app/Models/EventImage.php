@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class EventImage extends Model
 {
-    protected $table='event_images';
+    protected $table = 'event_images';
+    protected $primaryKey = 'event_image_id';
 
-    protected $primaryKey='event_image_id';
+    // PERBAIKAN: Beritahu Laravel kalau tabel ini tidak punya kolom updated_at
+    const UPDATED_AT = null; 
 
-    protected $fillable=[
+    protected $fillable = [
         'event_id',
         'image_path',
         'is_primary'
@@ -18,10 +20,6 @@ class EventImage extends Model
 
     public function event()
     {
-        return $this->belongsTo(
-            Event::class,
-            'event_id',
-            'event_id'
-        );
+        return $this->belongsTo(Event::class, 'event_id', 'event_id');
     }
 }
