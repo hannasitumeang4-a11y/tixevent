@@ -91,27 +91,28 @@
                                 </td>
                                 <td class="p-3">
                                     @if($payment->payment_proof)
-                                        <a href="{{ asset($payment->payment_proof) }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 font-medium inline-flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded border border-indigo-100 transition">
+                                        {{-- MODIFIKASI: Interaksi membuka modal internal preview gambar --}}
+                                        <button onclick="openPreviewModal('{{ asset('storage/' . $payment->payment_proof) }}')" class="text-indigo-600 hover:text-indigo-900 font-medium inline-flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded border border-indigo-100 transition cursor-pointer">
                                             🔍 Lihat Bukti
-                                        </a>
+                                        </button>
                                     @else
                                         <span class="text-gray-400 italic">Tidak ada bukti</span>
                                     @endif
                                 </td>
                                 <td class="p-3 text-center">
                                     <div class="flex items-center justify-center gap-2">
+                                        {{-- AKSI SETUJU (POST METHOD) --}}
                                         <form action="{{ route('admin.orders.approve', $payment->order_id) }}" method="POST" onsubmit="return confirm('Setujui pembayaran ini? Tiket otomatis dikirim ke pembeli.')">
                                             @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-3 rounded text-[11px] shadow transition">
+                                            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-3 rounded text-[11px] shadow transition cursor-pointer">
                                                 Setujui
                                             </button>
                                         </form>
                                         
-                                        <form action="{{ route('admin.orders.reject', $payment->order_id) }}" method="POST" onsubmit="return confirm('Tolak pembayaran ini jika bukti palsu/tidak valid?')">
+                                        {{-- AKSI REJECT & HAPUS TOTAL --}}
+                                        <form action="{{ route('admin.orders.reject', $payment->order_id) }}" method="POST" onsubmit="return confirm('Tolak pembayaran ini jika bukti palsu/tidak valid? Pesanan akan dihapus permanen dari sistem dan riwayat user!')">
                                             @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-1.5 px-3 rounded text-[11px] border border-red-200 transition">
+                                            <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-1.5 px-3 rounded text-[11px] border border-red-200 transition cursor-pointer">
                                                 Tolak
                                             </button>
                                         </form>
@@ -210,12 +211,31 @@
 
 </div>
 
+{{-- MODAL INTERFACE UNTUK PREVIEW GAMBAR STRUK TRANSFER SECARA ELEGAN --}}
+<div id="imageModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl p-4 max-w-sm w-full relative shadow-xl">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-xs font-bold text-gray-700 uppercase">File Struk Unggahan User</h3>
+            <button onclick="closePreviewModal()" class="text-gray-400 hover:text-gray-700 text-sm font-bold cursor-pointer">&times; Tutup</button>
+        </div>
+        <img id="modalImage" src="" class="w-full h-auto max-h-[350px] object-contain rounded-lg border">
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // KODE POP-UP MODAL PREVIEW
+    function openPreviewModal(src) {
+        document.getElementById('modalImage').src = src;
+        document.getElementById('imageModal').classList.remove('hidden');
+    }
+    function closePreviewModal() {
+        document.getElementById('imageModal').classList.add('hidden');
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         const ctx = document.getElementById('revenueChart').getContext('2d');
         
-        // Data dummy atau data dari Laravel backend ($chartLabels & $chartData)
         const labels = {!! json_encode($chartLabels ?? ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4']) !!};
         const dataRevenue = {!! json_encode($chartData ?? [1200000, 4500000, 3100000, 9250000]) !!};
 
@@ -226,7 +246,7 @@
                 datasets: [{
                     label: 'Omset (Rp)',
                     data: dataRevenue,
-                    borderColor: '#f59e0b', /* Warna amber menyesuaikan tema dashboard */
+                    borderColor: '#f59e0b',
                     backgroundColor: 'rgba(245, 158, 11, 0.1)',
                     borderWidth: 3,
                     fill: true,

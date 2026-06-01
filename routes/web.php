@@ -52,6 +52,8 @@ Route::middleware('auth')->group(function(){
 */
 Route::middleware('auth')->group(function(){
     Route::get('/profile', [PageController::class, 'profile'])->name('profile');
+    // TAMBAHKAN BARIS INI:
+    Route::put('/profile/update', [AuthController::class, 'updateProfile'])->name('profile.update');
 });
 
 /*
@@ -96,6 +98,17 @@ Route::prefix('admin')->middleware('auth')->group(function(){
     
     // 🚀 SINKRONISASI BARU: Jalur Unduh Dokumen Excel Laporan Admin
     Route::get('/reports/export-excel', [PageController::class, 'exportExcel'])->name('admin.report.export-excel');
+
+    // Pastikan rute ini mengarah ke PageController sesuai dengan arsitektur aplikasimu saat ini
+Route::post('/admin/orders/{id}/approve', [PageController::class, 'approveOrder'])->name('admin.orders.approve');
+Route::post('/admin/orders/{id}/reject', [PageController::class, 'rejectOrder'])->name('admin.orders.reject');
+
+    // =========================================================================
+    // 🛡️ KODE BARU: SISTEM VERIFIKASI PEMBAYARAN & ANTI-KECURANGAN 
+    // =========================================================================
+    Route::get('/orders/{id}', [AdminController::class, 'showOrder'])->name('admin.orders.show');
+    Route::post('/orders/{id}/approve', [AdminController::class, 'approveOrder'])->name('admin.orders.approve');
+    Route::post('/orders/{id}/reject', [AdminController::class, 'rejectOrder'])->name('admin.orders.reject');
 });
 
 /*

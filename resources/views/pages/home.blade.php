@@ -2,8 +2,38 @@
 
 @section('content')
 
+{{-- STYLE TAMBAHAN UNTUK ANIMASI MODERN --}}
+<style>
+    /* Animasi Ken Burns untuk gambar Hero */
+    .ken-burns {
+        animation: kenBurns 15s ease-out infinite alternate;
+    }
+    @keyframes kenBurns {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.15); }
+    }
+    
+    /* Animasi mengambang untuk elemen dekoratif */
+    .animate-float {
+        animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+
+    /* Efek teks gradasi bergerak */
+    .animate-gradient-text {
+        background-size: 200% auto;
+        animation: shineText 3s linear infinite;
+    }
+    @keyframes shineText {
+        to { background-position: 200% center; }
+    }
+</style>
+
 {{-- SIDEBAR KATEGORI (FIXED ACCORDION) --}}
-<aside class="group fixed left-0 top-0 h-screen bg-[#07080e] border-r border-slate-800/60 shadow-[4px_0_24px_rgba(0,0,0,0.6)] flex flex-col justify-start pt-24 z-40 w-16 md:w-20 hover:w-64 transition-all duration-300 ease-in-out overflow-hidden">
+<aside class="group fixed left-0 top-16 md:top-20 h-[calc(100vh-4rem)] bg-[#07080e] border-r border-slate-800/60 shadow-[4px_0_24px_rgba(0,0,0,0.6)] flex flex-col justify-start pt-6 z-30 w-16 md:w-20 hover:w-64 transition-all duration-300 ease-in-out overflow-y-auto min-h-0">
     
     <div class="px-5 mb-6 opacity-40 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
         <span class="text-[10px] font-bold tracking-[0.2em] text-indigo-400 block pl-1 uppercase font-digital">Kategori Digital</span>
@@ -47,69 +77,95 @@
     </div>
 </aside>
 
-{{-- WRAPPER KONTEN UTAMA: Ditambahkan padding-left agar tidak terpotong Sidebar Fixed --}}
-<div class="pl-16 md:pl-24 pr-4 md:pr-8 transition-all duration-300">
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+{{-- WRAPPER KONTEN UTAMA --}}
+<div class="pl-[4.5rem] md:pl-[5.5rem] pr-4 md:pr-12 pt-4 md:pt-6 -mt-2 md:-mt-4 transition-all duration-300 max-w-[1500px] mx-auto">
+    
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
         
         {{-- SISI KIRI (HERO, FILTER, CATALOG) --}}
-        <div class="lg:col-span-3 space-y-8">
+        <div class="lg:col-span-4 space-y-8">
             
             {{-- HERO CAROUSEL --}}
-            <div class="rounded-[28px] overflow-hidden relative shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-slate-800/60 bg-[#101222] aspect-[16/8] md:aspect-[21/9]">
+            <div class="rounded-[28px] overflow-hidden relative shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-slate-700/60 bg-[#101222] aspect-[16/8] md:aspect-[21/8.5] group">
+                <div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:40px_40px] z-20 pointer-events-none"></div>
                 
-                <div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff01_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)] bg-[size:32px_32px] z-20 pointer-events-none"></div>
+                <div class="absolute -top-24 -left-24 w-96 h-96 bg-indigo-600/30 rounded-full blur-[100px] z-10 pointer-events-none"></div>
 
-                <div id="heroCarousel" class="flex h-full w-full transition-transform duration-[1200ms] ease-[cubic-bezier(0.25,1,0.5,1)]">
-                    <img src="{{asset('assets/img/events/banner-hero-all.jpg')}}" class="w-full h-full object-cover flex-shrink-0 brightness-[0.85]">
-                    <img src="{{asset('assets/img/events/banner-concert.jpg')}}" class="w-full h-full object-cover flex-shrink-0 brightness-[0.85]">
-                    <img src="{{asset('assets/img/events/banner-seminar.jpg')}}" class="w-full h-full object-cover flex-shrink-0 brightness-[0.85]">
-                    <img src="{{asset('assets/img/events/banner-workshop.jpg')}}" class="w-full h-full object-cover flex-shrink-0 brightness-[0.85]">
+                <div id="heroCarousel" class="flex h-full w-full transition-transform duration-[1000ms] ease-[cubic-bezier(0.25,1,0.5,1)]">
+                    <div class="w-full h-full flex-shrink-0 relative overflow-hidden">
+                        <img src="{{asset('assets/img/events/banner-hero-all.jpg')}}" class="w-full h-full object-cover brightness-[0.7] ken-burns">
+                    </div>
+                    <div class="w-full h-full flex-shrink-0 relative overflow-hidden">
+                        <img src="{{asset('assets/img/events/banner-concert.jpg')}}" class="w-full h-full object-cover brightness-[0.7] ken-burns">
+                    </div>
+                    <div class="w-full h-full flex-shrink-0 relative overflow-hidden">
+                        <img src="{{asset('assets/img/events/banner-seminar.jpg')}}" class="w-full h-full object-cover brightness-[0.7] ken-burns">
+                    </div>
+                    <div class="w-full h-full flex-shrink-0 relative overflow-hidden">
+                        <img src="{{asset('assets/img/events/banner-workshop.jpg')}}" class="w-full h-full object-cover brightness-[0.7] ken-burns">
+                    </div>
                 </div>
 
-                <div class="absolute inset-0 bg-gradient-to-t from-[#090a10] via-[#090a10]/60 to-transparent z-10 flex flex-col justify-end p-6 md:p-10">
-                    <div class="max-w-2xl space-y-3">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
-                            <span class="text-[10px] uppercase font-digital tracking-[0.25em] text-indigo-400 font-extrabold">NEXT-GEN TICKET PLATFORM</span>
+                <div class="absolute inset-0 bg-gradient-to-t from-[#05060b] via-[#090a10]/60 to-transparent z-20 flex flex-col justify-end p-8 md:p-14">
+                    <div class="max-w-3xl space-y-4 relative">
+                        <div class="flex items-center gap-3 animate-float inline-flex bg-indigo-950/50 border border-indigo-500/30 backdrop-blur-sm px-4 py-1.5 rounded-full">
+                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-400 shadow-[0_0_10px_#818cf8] animate-ping"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-400 absolute"></span>
+                            <span class="text-[10px] uppercase font-digital tracking-[0.25em] text-indigo-300 font-extrabold">NEXT-GEN TICKET PLATFORM</span>
                         </div>
 
-                        <h1 class="text-3xl md:text-5xl font-black tracking-tight text-white leading-tight">
-                            Temukan Event <span class="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Favoritmu</span>
+                        {{-- PERBAIKAN: Font diubah dari md:text-6xl ke text-4xl dan lg:text-[2.75rem] agar jauh lebih proporsional --}}
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-[2.75rem] font-black tracking-tight text-white leading-snug drop-shadow-2xl">
+                            Temukan Event <br class="hidden sm:block">
+                            {{-- PERBAIKAN: Gradasi diperkuat dan ditambahkan efek glow shadow --}}
+                            <span class="bg-gradient-to-r from-cyan-400 via-indigo-400 to-pink-400 bg-clip-text text-transparent animate-gradient-text drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">Favoritmu Disini</span>
                         </h1>
                         
-                        <p class="text-xs md:text-sm text-slate-300 font-normal max-w-xl leading-relaxed">
+                        <p class="text-xs md:text-sm text-slate-300 font-light max-w-xl leading-relaxed opacity-90 drop-shadow-lg">
                             Rasakan kemudahan akses digital menuju panggung hiburan konser musik akbar, ruang seminar edukatif, hingga workshop interaktif masa kini.
                         </p>
 
-                        <div class="flex flex-wrap gap-3 pt-3">
-                            <a href="#event-list" class="bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 hover:brightness-110 transition-all duration-300 px-6 py-3 rounded-xl font-bold text-xs shadow-lg shadow-indigo-600/20 border border-white/10 text-white">
-                                Jelajahi Digital Feed
+                        <div class="flex flex-wrap gap-4 pt-3">
+                            <a href="#event-list" class="relative overflow-hidden group/btn bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:scale-105 transition-all duration-300 px-8 py-3.5 rounded-xl font-bold text-xs shadow-[0_0_30px_rgba(99,102,241,0.4)] border border-white/20 text-white">
+                                <span class="relative z-10 flex items-center gap-2">Jelajahi Digital Feed <svg class="w-4 h-4 group-hover/btn:translate-x-1 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></span>
+                                <div class="absolute inset-0 h-full w-full bg-white/20 transform scale-x-0 group-hover/btn:scale-x-100 transition-transform origin-left duration-300"></div>
                             </a>
-                            <a href="#popular" class="bg-white/[0.04] hover:bg-white/[0.08] text-white border border-slate-700/60 backdrop-blur-md transition-all duration-300 px-6 py-3 rounded-xl font-bold text-xs">
+                            <a href="#popular" class="bg-white/5 hover:bg-white/10 text-white border border-slate-600/60 backdrop-blur-md hover:border-slate-400/80 transition-all duration-300 px-8 py-3.5 rounded-xl font-bold text-xs flex items-center gap-2">
                                 Tren Populer
                             </a>
                         </div>
                     </div>
                 </div>
+
+                {{-- Indikator Navigasi Bawah Carousel --}}
+                <div class="absolute bottom-6 right-8 z-30 flex gap-2">
+                    <button class="carousel-dot w-8 h-1.5 rounded-full bg-indigo-500 transition-all duration-300" data-index="0"></button>
+                    <button class="carousel-dot w-2 h-1.5 rounded-full bg-white/30 hover:bg-white/60 transition-all duration-300" data-index="1"></button>
+                    <button class="carousel-dot w-2 h-1.5 rounded-full bg-white/30 hover:bg-white/60 transition-all duration-300" data-index="2"></button>
+                    <button class="carousel-dot w-2 h-1.5 rounded-full bg-white/30 hover:bg-white/60 transition-all duration-300" data-index="3"></button>
+                </div>
             </div>
 
             {{-- MINI STATUS PANEL --}}
             <div class="grid grid-cols-3 gap-4">
-                <div class="bg-gradient-to-b from-[#131524] to-[#0e101b] p-5 rounded-2xl border border-slate-800/80 shadow-sm relative group overflow-hidden hover:border-slate-700 transition duration-300">
+                <div class="bg-gradient-to-b from-[#131524] to-[#0e101b] p-5 rounded-2xl border border-slate-800/80 shadow-sm relative group overflow-hidden hover:border-indigo-500/50 transition duration-300">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-indigo-500/10 rounded-full blur-xl group-hover:bg-indigo-500/20 transition duration-300"></div>
                     <div class="text-2xl md:text-3xl font-black font-digital text-indigo-400 group-hover:scale-105 transition duration-300 origin-left">
                         {{ $events->total() }}
                     </div>
                     <div class="text-[9px] font-bold text-slate-500 mt-1.5 tracking-widest uppercase font-digital">EVENT TERSEDIA</div>
                 </div>
 
-                <div class="bg-gradient-to-b from-[#131524] to-[#0e101b] p-5 rounded-2xl border border-slate-800/80 shadow-sm relative group overflow-hidden hover:border-slate-700 transition duration-300">
+                <div class="bg-gradient-to-b from-[#131524] to-[#0e101b] p-5 rounded-2xl border border-slate-800/80 shadow-sm relative group overflow-hidden hover:border-purple-500/50 transition duration-300">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition duration-300"></div>
                     <div class="text-2xl md:text-3xl font-black font-digital text-purple-400 group-hover:scale-105 transition duration-300 origin-left">
                         {{ $categories->count() }}
                     </div>
                     <div class="text-[9px] font-bold text-slate-500 mt-1.5 tracking-widest uppercase font-digital">KATEGORI AKTIF</div>
                 </div>
 
-                <div class="bg-gradient-to-b from-[#131524] to-[#0e101b] p-5 rounded-2xl border border-slate-800/80 shadow-sm relative group overflow-hidden hover:border-slate-700 transition duration-300">
+                <div class="bg-gradient-to-b from-[#131524] to-[#0e101b] p-5 rounded-2xl border border-slate-800/80 shadow-sm relative group overflow-hidden hover:border-emerald-500/50 transition duration-300">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition duration-300"></div>
                     <div class="text-2xl md:text-3xl font-black font-digital text-emerald-400 group-hover:scale-105 transition duration-300 origin-left">
                         1K+
                     </div>
@@ -118,7 +174,7 @@
             </div>
 
             {{-- SEARCH & FILTER FORM --}}
-            <form action="{{ route('home') }}#popular" method="GET" class="space-y-3">
+            <form action="{{ route('home') }}#popular" method="GET" class="space-y-3 relative z-10">
                 @if(request('category'))
                     <input type="hidden" name="category" value="{{ request('category') }}">
                 @endif
@@ -139,14 +195,14 @@
                                 <span class="w-1.5 h-1.5 rounded-full bg-pink-500 inline-block animate-pulse"></span>
                             @endif
                         </button>
-                        <button type="submit" class="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white px-6 py-4 rounded-2xl text-xs font-bold transition duration-200 shadow-md active:scale-95">
+                        <button type="submit" class="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white px-6 py-4 rounded-2xl text-xs font-bold transition duration-200 shadow-[0_0_15px_rgba(79,70,229,0.3)] active:scale-95">
                             Cari Event
                         </button>
                     </div>
                 </div>
 
-                {{-- PANEL FILTER TAMBAHAN (SMOOTH SLIDE ANIMATION) --}}
-                <div id="panelFilterOpsi" class="max-h-0 overflow-hidden transition-all duration-300 ease-in-out bg-[#111322] border border-transparent rounded-2xl opacity-0 {{ request('filter_location') || request('min_price') || request('max_price') ? '!max-h-[500px] !opacity-100 !border-slate-800 p-5 mt-2' : '' }}">
+                {{-- PANEL FILTER TAMBAHAN --}}
+                <div id="panelFilterOpsi" class="max-h-0 overflow-hidden transition-all duration-500 ease-in-out bg-[#111322] border border-transparent rounded-2xl opacity-0 {{ request('filter_location') || request('min_price') || request('max_price') ? '!max-h-[500px] !opacity-100 !border-slate-800 p-5 mt-2' : '' }}">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         
                         {{-- Lokasi --}}
@@ -200,22 +256,24 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     @forelse($popular as $item)
                         <a href="{{ route('events.detail', $item->event_id) }}" class="group flex flex-col h-full">
-                            <div class="bg-[#121424] rounded-[24px] overflow-hidden border border-slate-800/60 shadow-lg hover:shadow-[0_20px_40px_rgba(99,102,241,0.1)] hover:border-indigo-500/40 hover:-translate-y-1 duration-300 flex flex-col h-full relative transition-all">
+                            <div class="bg-[#121424] rounded-[24px] overflow-hidden border border-slate-800/60 shadow-lg hover:shadow-[0_20px_40px_rgba(99,102,241,0.15)] hover:border-indigo-500/50 hover:-translate-y-2 duration-300 flex flex-col h-full relative transition-all">
                                 
                                 <div class="h-44 overflow-hidden relative bg-slate-950">
                                     @php
                                         $popularImage = $item->primaryImage ?? $item->images->first();
                                     @endphp
                                     <img src="{{ asset($popularImage ? $popularImage->image_path : 'assets/img/events/banner-hero-all.jpg') }}" 
-                                         class="w-full h-full object-cover group-hover:scale-105 duration-700 opacity-90 group-hover:opacity-100"
+                                         class="w-full h-full object-cover group-hover:scale-110 duration-700 opacity-90 group-hover:opacity-100 transition-transform"
                                          onerror="this.onerror=null;this.src='{{ asset('assets/img/events/banner-hero-all.jpg') }}';">
                                     
-                                    <div class="absolute top-4 left-4 bg-gradient-to-r from-indigo-600/90 to-purple-600/90 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full text-[9px] font-black tracking-widest text-white font-digital uppercase shadow-md">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-[#121424] to-transparent opacity-80"></div>
+
+                                    <div class="absolute top-4 left-4 bg-gradient-to-r from-indigo-600/90 to-purple-600/90 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full text-[9px] font-black tracking-widest text-white font-digital uppercase shadow-md z-10">
                                         {{ $item->category->name ?? 'TRENDING' }}
                                     </div>
                                 </div>
 
-                                <div class="p-5 flex flex-col flex-1 justify-between bg-gradient-to-b from-[#121424] to-[#0a0b12]">
+                                <div class="p-5 flex flex-col flex-1 justify-between bg-gradient-to-b from-[#121424] to-[#0a0b12] relative z-10 -mt-6 rounded-t-[20px]">
                                     <div class="space-y-2">
                                         <h3 class="font-bold text-sm text-slate-200 line-clamp-1 group-hover:text-indigo-400 duration-200 tracking-wide transition-colors">
                                             {{ $item->title }}
@@ -227,11 +285,11 @@
 
                                         <div class="flex flex-col gap-1.5 text-[11px] text-slate-500 font-medium pt-2">
                                             <span class="flex items-center gap-2">
-                                                <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2V12a2 2 0 002 2z"></path></svg>
+                                                <svg class="w-3.5 h-3.5 text-indigo-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2V12a2 2 0 002 2z"></path></svg>
                                                 {{ \Carbon\Carbon::parse($item->event_date)->format('d M Y') }}
                                             </span>
                                             <span class="flex items-center gap-2 truncate">
-                                                <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                                                <svg class="w-3.5 h-3.5 text-indigo-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
                                                 <span class="truncate text-slate-500 group-hover:text-slate-400 duration-200 transition-colors">{{ $item->location }}</span>
                                             </span>
                                         </div>
@@ -239,13 +297,13 @@
 
                                     <div class="mt-5 pt-4 border-t border-slate-800/60 flex items-center justify-between">
                                         <span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest font-digital">Access Pass</span>
-                                        <span class="text-indigo-400 font-black text-base font-digital group-hover:text-indigo-300 transition-all">
+                                        <span class="text-indigo-400 font-black text-base font-digital group-hover:text-pink-400 transition-colors drop-shadow-md">
                                             Rp{{ number_format($item->price, 0, ',', '.') }}
                                         </span>
                                     </div>
                                 </div>
 
-                                <div class="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+                                <div class="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
                             </div>
                         </a>
                     @empty
@@ -264,32 +322,34 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     @forelse($events as $event)
                         <a href="{{ route('events.detail', $event->event_id) }}" class="group">
-                            <div class="bg-[#121424] rounded-[24px] overflow-hidden border border-slate-800/60 shadow-lg hover:shadow-xl hover:border-slate-700 hover:-translate-y-1 duration-300 flex flex-col h-full transition-all">
+                            <div class="bg-[#121424] rounded-[24px] overflow-hidden border border-slate-800/60 shadow-lg hover:shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:border-slate-600 hover:-translate-y-1 duration-300 flex flex-col h-full transition-all">
                                 <div class="h-48 overflow-hidden relative bg-slate-950">
                                     @php
                                         $primaryImage = $event->primaryImage ?? $event->images->first();
                                     @endphp
                                     <img src="{{ asset($primaryImage ? $primaryImage->image_path : 'assets/img/events/banner-hero-all.jpg') }}" 
-                                         class="w-full h-full object-cover group-hover:scale-105 duration-700 opacity-90 group-hover:opacity-100"
+                                         class="w-full h-full object-cover group-hover:scale-110 duration-700 opacity-80 group-hover:opacity-100 transition-transform"
                                          onerror="this.onerror=null;this.src='{{ asset('assets/img/events/banner-hero-all.jpg') }}';">
                                     
-                                    <div class="absolute top-4 right-4 bg-slate-950/80 backdrop-blur-md border border-slate-800 px-3 py-1 rounded-full text-[9px] font-bold text-emerald-400 font-digital tracking-wide">
-                                        ONLINE CONFIRMED
+                                    <div class="absolute inset-0 bg-gradient-to-t from-[#121424] to-transparent opacity-90"></div>
+                                    
+                                    <div class="absolute top-4 right-4 bg-slate-950/80 backdrop-blur-md border border-slate-700 px-3 py-1 rounded-full text-[9px] font-bold text-emerald-400 font-digital tracking-wide z-10 flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE CONFIRMED
                                     </div>
                                 </div>
 
-                                <div class="p-5 flex flex-col flex-1 justify-between bg-[#121424]">
+                                <div class="p-5 flex flex-col flex-1 justify-between bg-[#121424] relative z-10 -mt-8 rounded-t-[20px]">
                                     <div class="space-y-2">
                                         <h3 class="font-bold text-sm text-slate-200 line-clamp-2 group-hover:text-indigo-400 duration-200 transition-colors">
                                             {{ $event->title }}
                                         </h3>
                                         <div class="flex flex-col gap-1 text-[11px] text-slate-500 font-medium">
                                             <span class="flex items-center gap-2">
-                                                <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2V12a2 2 0 002 2z"></path></svg>
+                                                <svg class="w-3.5 h-3.5 text-slate-600 group-hover:text-indigo-500/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2V12a2 2 0 002 2z"></path></svg>
                                                 {{ \Carbon\Carbon::parse($event->event_date)->format('d M Y') }}
                                             </span>
                                             <span class="flex items-center gap-2 truncate">
-                                                <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                                                <svg class="w-3.5 h-3.5 text-slate-600 group-hover:text-indigo-500/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
                                                 <span class="truncate">{{ $event->location }}</span>
                                             </span>
                                         </div>
@@ -308,24 +368,23 @@
                         </div>
                     @endforelse
                 </div>
-
-                <div class="mt-8 border-t border-slate-800/60 pt-6">
-                    {{ $events->links() }}
-                </div>
             </div>
 
         </div>
 
         {{-- SISI KANAN (STICKY DIGITAL CART) --}}
-        <div class="lg:col-span-1">
-            <div class="bg-[#121424] rounded-2xl border border-slate-800/90 shadow-2xl p-6 sticky top-24 space-y-4">
+        <div class="lg:col-span-1 relative z-20">
+            <div class="bg-[#121424] rounded-2xl border border-slate-700/60 shadow-[0_0_40px_rgba(0,0,0,0.8)] p-6 sticky top-24 md:top-28 space-y-4 h-auto">
+                {{-- Glow accent on cart --}}
+                <div class="absolute -top-1 -right-1 w-20 h-20 bg-pink-500/10 rounded-full blur-xl pointer-events-none"></div>
+
                 <h2 class="font-bold text-sm text-white font-digital flex items-center gap-2 border-b border-slate-800 pb-3 tracking-wider uppercase">
                     <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                     <span>Digital Cart</span>
                 </h2>
 
                 @if(session('cart') && count(session('cart')) > 0)
-                    <div class="divide-y divide-slate-800 max-h-72 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+                    <div class="divide-y divide-slate-800 max-h-72 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
                         @foreach(session('cart') as $cart)
                             <div class="py-3 first:pt-0 last:pb-0 group/cart">
                                 <h4 class="font-bold text-slate-300 line-clamp-1 text-xs group-hover/cart:text-indigo-400 transition-colors duration-200">{{ $cart['title'] }}</h4>
@@ -340,58 +399,86 @@
                             </div>
                         @endforeach
                     </div>
-                    <a href="{{ route('cart') }}" class="block w-full text-center bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 hover:brightness-110 transition-all text-white py-3.5 rounded-xl font-bold text-xs tracking-wider shadow-lg shadow-indigo-600/10 uppercase">
+                    <a href="{{ route('cart') }}" class="block w-full text-center bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 hover:scale-[1.02] transition-transform text-white py-3.5 rounded-xl font-bold text-xs tracking-wider shadow-[0_0_20px_rgba(147,51,234,0.3)] uppercase">
                         Proses Enkripsi Order
                     </a>
                 @else
                     <div class="text-center py-8 space-y-3">
-                        <div class="w-11 h-11 mx-auto bg-slate-950 rounded-full flex items-center justify-center border border-slate-800/80 text-slate-600">
+                        <div class="w-11 h-11 mx-auto bg-slate-900 rounded-full flex items-center justify-center border border-slate-800/80 text-slate-600 shadow-inner">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                         </div>
-                        <p class="text-[11px] text-slate-500 font-normal max-w-[180px] mx-auto">Konsol keranjang kosong.</p>
-                        <a href="#event-list" class="inline-block text-xs text-indigo-400 font-bold hover:underline pt-1 font-digital tracking-wide">
-                            Ambil Tiket Aktif &rarr;
-                        </a>
+                        <p class="text-[11px] text-slate-500 font-medium">Konsol keranjang kosong.</p>
                     </div>
                 @endif
             </div>
         </div>
-
+        
     </div>
 </div>
 
+{{-- SCRIPT UNTUK ANIMASI CAROUSEL & TOGGLE FILTER --}}
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    // Logic Slider Banner Hero
-    const slider = document.getElementById("heroCarousel");
-    let current = 0;
-    const totalSlides = 4;
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- 1. LOGIKA CAROUSEL HERO ---
+        const carousel = document.getElementById('heroCarousel');
+        const dots = document.querySelectorAll('.carousel-dot');
+        const totalSlides = carousel.children.length;
+        let currentSlide = 0;
+        let slideInterval;
 
-    if (slider) {
-        setInterval(() => {
-            current = (current + 1) % totalSlides;
-            slider.style.transform = `translateX(-${current * 100}%)`;
-        }, 5000); // Durasi slide disesuaikan menjadi 5 detik agar lebih nyaman dibaca
-    }
+        function updateSlider(index) {
+            // Geser gambar
+            carousel.style.transform = `translateX(-${index * 100}%)`;
+            
+            // Update UI dot
+            dots.forEach((dot, i) => {
+                if (i === index) {
+                    dot.classList.remove('w-2', 'bg-white/30');
+                    dot.classList.add('w-8', 'bg-indigo-500');
+                } else {
+                    dot.classList.remove('w-8', 'bg-indigo-500');
+                    dot.classList.add('w-2', 'bg-white/30');
+                }
+            });
+            currentSlide = index;
+        }
 
-    // Logic Toggle Dropdown Filter Tambahan dengan Animasi Smooth Height
-    const btnToggle = document.getElementById('btnToggleFilter');
-    const panelFilter = document.getElementById('panelFilterOpsi');
+        function nextSlide() {
+            let nextIndex = (currentSlide + 1) % totalSlides;
+            updateSlider(nextIndex);
+        }
 
-    if(btnToggle && panelFilter) {
-        btnToggle.addEventListener('click', () => {
-            if (panelFilter.classList.contains('max-h-0')) {
-                // Buka Filter Panel
-                panelFilter.classList.remove('max-h-0', 'opacity-0', 'border-transparent');
-                panelFilter.classList.add('max-h-[500px]', 'opacity-100', 'border-slate-800', 'p-5', 'mt-2');
-            } else {
-                // Tutup Filter Panel
-                panelFilter.classList.remove('max-h-[500px]', 'opacity-100', 'border-slate-800', 'p-5', 'mt-2');
-                panelFilter.classList.add('max-h-0', 'opacity-0', 'border-transparent');
-            }
-        });
-    }
-});
+        // Jalankan auto-slide tiap 5 detik
+        if (totalSlides > 1) {
+            slideInterval = setInterval(nextSlide, 5000);
+            
+            // Klik dot untuk navigasi manual
+            dots.forEach(dot => {
+                dot.addEventListener('click', (e) => {
+                    clearInterval(slideInterval); // Hentikan auto-slide sebentar saat di klik
+                    const index = parseInt(e.target.getAttribute('data-index'));
+                    updateSlider(index);
+                    slideInterval = setInterval(nextSlide, 5000); // Mulai lagi
+                });
+            });
+        }
+
+        // --- 2. LOGIKA TOGGLE FILTER PANEL ---
+        const btnToggle = document.getElementById('btnToggleFilter');
+        const panelFilter = document.getElementById('panelFilterOpsi');
+
+        if(btnToggle && panelFilter) {
+            btnToggle.addEventListener('click', () => {
+                if(panelFilter.classList.contains('opacity-0')) {
+                    panelFilter.classList.remove('max-h-0', 'opacity-0', 'border-transparent');
+                    panelFilter.classList.add('max-h-[500px]', 'opacity-100', 'border-slate-800', 'p-5', 'mt-2');
+                } else {
+                    panelFilter.classList.add('max-h-0', 'opacity-0', 'border-transparent');
+                    panelFilter.classList.remove('max-h-[500px]', 'opacity-100', 'border-slate-800', 'p-5', 'mt-2');
+                }
+            });
+        }
+    });
 </script>
 
 @endsection

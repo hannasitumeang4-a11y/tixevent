@@ -1,9 +1,46 @@
 @extends('layouts.app')
 
 @section('content')
+{{-- STYLE KHUSUS UNTUK PROSES CETAK NOTA --}}
+<style>
+    @media print {
+        /* 1. Sembunyikan seluruh elemen global dari layouts.app (Navbar, Footer, Sidebar, dll) */
+        nav, header, footer, sidebar, aside, .navbar, [class*="nav"], [id*="nav"] {
+            display: none !important;
+        }
+
+        /* 2. Bersihkan background abu-abu bawaan wrapper luar */
+        .min-h-screen, .bg-slate-50 {
+            background-color: transparent !important;
+            background: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            min-height: auto !important;
+        }
+
+        /* 3. Atur kotak nota agar bersih, rapi, dan tidak berbayang kotor di kertas */
+        #invoice-card {
+            box-shadow: none !important;
+            border: 1px solid #cbd5e1 !important; /* border tipis agar tetap rapi saat dicetak */
+            margin: 0 auto !important;
+            padding: 2rem !important;
+            max-width: 100% !important;
+            width: 100% !important;
+        }
+
+        /* 4. Paksa browser untuk mencetak warna & background asli komponen barcode */
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-scheme: light !important;
+        }
+    }
+</style>
+
 <div class="max-w-3xl mx-auto p-8 bg-slate-50 min-h-screen">
 
-    <div class="bg-white rounded-2xl shadow-md border border-slate-200 p-8">
+    {{-- Ditambahkan id="invoice-card" untuk target styling print --}}
+    <div id="invoice-card" class="bg-white rounded-2xl shadow-md border border-slate-200 p-8">
 
         <div class="text-center border-b border-slate-100 pb-6">
             <h1 class="text-3xl font-extrabold text-emerald-600 flex items-center justify-center gap-2">
@@ -64,6 +101,7 @@
             <p class="text-[9px] font-mono text-slate-400 mt-1 uppercase tracking-widest">Digital Order Node Security Code</p>
         </div>
 
+        {{-- Tombol otomatis hilang saat cetak berkat class print:hidden --}}
         <div class="grid grid-cols-2 gap-4 mt-8 print:hidden">
 
             <button onclick="window.print()"

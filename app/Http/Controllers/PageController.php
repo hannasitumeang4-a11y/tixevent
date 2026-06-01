@@ -121,89 +121,119 @@ class PageController extends Controller
         return view('pages.checkout', compact('event', 'ticket'));
     }
 
-    public function processPayment(Request $request) 
-    {
-        if (!auth()->check()) {
-            return redirect()->route('login');
+public function processPayment(Request $request) 
+{
+    if (!auth()->check()) {
+        return redirect()->route('login');
+    }
+
+    $ticket = EventTicket::findOrFail($request->ticket_id);
+    $isFree = $ticket->price == 0;
+
+    // 1. VALIDASI QUANTITY & BUKTI TRANSFER
+    $request->validate([
+        'name' => 'required',
+        'email' => 'required|email',
+        'phone' => 'required',
+        'payment_method' => $isFree ? 'nullable' : 'required',
+        'ticket_id' => 'required',
+        'quantity' => 'required|integer|min:1', 
+        'payment_proof' => $isFree ? 'nullable' : 'required|image|mimes:jpg,png,jpeg|max:2048' // Wajib upload jika berbayar
+    ]);
+
+    $requestedQty = (int) $request->quantity;
+
+    // Cek ketersediaan stok tiket
+    if ($ticket->stock < $requestedQty) {
+        return redirect()->back()->with('error', 'Maaf, stok tiket tidak mencukupi. Sisa stok saat ini: ' . $ticket->stock . ' tiket.');
+    }
+
+    // Hitung total nominal belanja
+    $total = $ticket->price * $requestedQty;
+    $file = null;
+    
+    // LOGIKA PENENTUAN STATUS (KUNCI UTAMA FIX ADMIN KOSONG)
+    $orderStatus = 'pending'; 
+
+    if ($isFree) {
+        $payment = 'free_pass';
+        $orderStatus = 'paid'; // Jika gratis, langsung otomatis Lunas/Paid
+    } else {
+        $payment = 'transfer';
+        $orderStatus = 'pending'; // Jika berbayar, WAJIB Pending agar diverifikasi admin terlebih dahulu
+        
+        if ($request->payment_method == 'qris') {
+            $payment = 'ewallet';
         }
 
-        $ticket = EventTicket::findOrFail($request->ticket_id);
-        $isFree = $ticket->price == 0;
-
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required|email',
-            'phone' => 'required',
-            'payment_method' => $isFree ? 'nullable' : 'required',
-            'ticket_id' => 'required',
-            'payment_proof' => 'nullable|image|mimes:jpg,png,jpeg|max:2048'
-        ]);
-
-        $total = $ticket->price;
-        $file = null;
-
-        if ($isFree) {
-            $payment = 'free_pass';
-        } else {
-            $payment = 'transfer';
-            if ($request->payment_method == 'qris') {
-                $payment = 'ewallet';
-            }
-
-            if ($request->hasFile('payment_proof')) {
-                $file = $request->file('payment_proof')->store('payments', 'public');
-            }
+        // Simpan file gambar fisik ke dalam "Wadah" folder storage/app/public/payments
+        if ($request->hasFile('payment_proof')) {
+            $file = $request->file('payment_proof')->store('payments', 'public');
         }
+    }
 
-        $currentUserId = auth()->user()->user_id ?? auth()->id();
-        $uniqueOrderCode = 'ORD-' . time() . rand(10, 99);
+    $currentUserId = auth()->user()->user_id ?? auth()->id();
+    $uniqueOrderCode = 'ORD-' . time() . rand(10, 99);
 
-        DB::table('orders')->insert([
-            'order_code' => $uniqueOrderCode,
-            'user_id' => $currentUserId,
-            'event_id' => $ticket->event_id,
-            'ticket_id' => $request->ticket_id, 
-            'quantity' => 1,
-            'total_amount' => $total,
-            'payment_method' => $payment,
-            'payment_proof' => $file,
-            'order_status' => 'paid', 
+    // 2. SIMPAN KE TABEL ORDERS DENGAN STATUS DINAMIS
+    DB::table('orders')->insert([
+        'order_code' => $uniqueOrderCode,
+        'user_id' => $currentUserId,
+        'event_id' => $ticket->event_id,
+        'ticket_id' => $request->ticket_id, 
+        'quantity' => $requestedQty,
+        'total_amount' => $total,
+        'payment_method' => $payment,
+        'payment_proof' => $file, // Menyimpan path wadah gambar
+        'order_status' => $orderStatus, // Menggunakan status dinamis (bukan 'paid' terus-menerus)
+        'created_at' => now(),
+        'updated_at' => now()
+    ]);
+
+    $savedOrder = DB::table('orders')->where('order_code', $uniqueOrderCode)->first();
+    $actualOrderId = $savedOrder->order_id ?? $savedOrder->id ?? null;
+
+    // 3. SIMPAN DETAIL DI ORDER ITEMS
+    try {
+        DB::table('order_items')->insert([
+            'order_id' => $actualOrderId, 
+            'event_ticket_id' => $request->ticket_id, 
+            'quantity' => $requestedQty, 
+            'subtotal' => $total,
             'created_at' => now(),
             'updated_at' => now()
         ]);
-
-        $savedOrder = DB::table('orders')->where('order_code', $uniqueOrderCode)->first();
-        $actualOrderId = $savedOrder->order_id ?? $savedOrder->id ?? null;
-
+    } catch (\Exception $e) {
         try {
             DB::table('order_items')->insert([
                 'order_id' => $actualOrderId, 
-                'event_ticket_id' => $request->ticket_id, 
-                'quantity' => 1,
+                'ticket_id' => $request->ticket_id, 
+                'quantity' => $requestedQty, 
                 'subtotal' => $total,
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
-        } catch (\Exception $e) {
-            try {
-                DB::table('order_items')->insert([
-                    'order_id' => $actualOrderId, 
-                    'ticket_id' => $request->ticket_id, 
-                    'quantity' => 1,
-                    'subtotal' => $total,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            } catch (\Exception $fallbackException) {
-                Log::error('Gagal mencatat rincian transaksi pada order_items: ' . $fallbackException->getMessage());
-            }
+        } catch (\Exception $fallbackException) {
+            \Log::error('Gagal mencatat rincian transaksi pada order_items: ' . $fallbackException->getMessage());
         }
-
-        return redirect()
-            ->route('invoice', $actualOrderId)
-            ->with('success', 'Pembayaran berhasil diproses!');
     }
 
+    // 4. PENGURANGAN STOK TIKET
+    // Catatan: Jika ingin stok berkurang HANYA setelah admin menyetujui transfer, 
+    // pindahkan baris decrement ini ke dalam fungsi approveOrder di PageController.
+    $ticket->decrement('stock', $requestedQty);
+
+    // 5. REDIRECT HALAMAN SESUAI STATUS
+    if ($orderStatus === 'paid') {
+        return redirect()
+            ->route('invoice', $actualOrderId)
+            ->with('success', 'Pembayaran sukses, tiket instan Anda langsung aktif!');
+    }
+
+    return redirect()
+        ->route('profile') // Diarahkan ke profile/riwayat agar user melihat statusnya masih "pending"
+        ->with('success', 'Pesanan berhasil dibuat! Menunggu verifikasi bukti pembayaran oleh admin.');
+}
     public function invoice($id)
     {
         if (!auth()->check()) {
@@ -262,7 +292,7 @@ class PageController extends Controller
         return view('auth.register');
     }
 
-    public function profile()
+  public function profile()
     {
         if (!auth()->check()) {
             return redirect()->route('login');
@@ -270,7 +300,9 @@ class PageController extends Controller
 
         $currentUserId = auth()->user()->user_id ?? auth()->id();
 
-        $orders = Order::where('user_id', $currentUserId)
+        // Tambahkan with(['event', 'ticket']) agar data nama konser dan tiket terambil dari database
+        $orders = Order::with(['event', 'ticket']) 
+            ->where('user_id', $currentUserId)
             ->latest()
             ->get();
 
@@ -278,19 +310,81 @@ class PageController extends Controller
     }
 
     public function dashboard()
-    {
-        $totalEvent = Event::count();
-        $totalUsers = User::count();
-        $totalOrders = Order::count();
-        $totalRevenue = Order::sum('total_amount');
+{
+    // === KODE BAWAAN UTUH (TIDAK DIUBAH) ===
+    $totalEvent = Event::count();
+    $totalUsers = User::count();
+    $totalOrders = Order::where('order_status', 'paid')->count();
+    $totalRevenue = Order::where('order_status', 'paid')->sum('total_amount');
 
-        $recentOrders = Order::latest()->take(5)->get();
-        $recentEvents = Event::latest()->take(5)->get();
+    $recentOrders = Order::latest()->take(5)->get();
+    $recentEvents = Event::latest()->take(5)->get();
 
-        return view('admin.dashboard', compact(
-            'totalEvent', 'totalUsers', 'totalOrders', 'totalRevenue', 'recentOrders', 'recentEvents'
-        ));
+
+    // === TAMBAHAN LOGIKA BARU AGAR TIDAK KOSONG ===
+    
+    // 1. Ambil data pesanan berstatus 'pending' beserta relasi user & event
+    $pendingPayments = Order::join('users', 'orders.user_id', '=', 'users.user_id')
+        ->join('events', 'orders.event_id', '=', 'events.event_id')
+        ->select(
+            'orders.order_id', 
+            'orders.created_at', 
+            'users.name as user_name', 
+            'events.title as event_title',
+            'orders.payment_proof',
+            'orders.order_status'
+        )
+        ->where('orders.order_status', 'pending')
+        ->latest('orders.created_at')
+        ->get();
+
+    // 2. Hitung jumlah transaksi menggantung untuk mengaktifkan kotak warning kuning di atas
+    $stuckTransactionsCount = $pendingPayments->count();
+
+
+    // === KIRIM SEMUA VARIABEL KE VIEW DASHBOARD ===
+    return view('admin.dashboard', compact(
+        'totalEvent', 'totalUsers', 'totalOrders', 'totalRevenue', 
+        'recentOrders', 'recentEvents', 'pendingPayments', 'stuckTransactionsCount'
+    ));
+}
+
+/**
+ * FUNGSI: MENYETUJUI PEMBAYARAN USER
+ */
+public function approveOrder($id)
+{
+    \Illuminate\Support\Facades\DB::table('orders')
+        ->where('order_id', $id)
+        ->update([
+            'order_status' => 'paid',
+            'updated_at' => now()
+        ]);
+
+    return redirect()->back()->with('success', 'Pembayaran sukses diverifikasi!');
+}
+
+/**
+ * FUNGSI: MENOLAK STRUK PALSU & HAPUS PERMANEN
+ */
+public function rejectOrder($id)
+{
+    $order = \Illuminate\Support\Facades\DB::table('orders')->where('order_id', $id)->first();
+
+    if ($order) {
+        // Hapus file gambar di storage jika ada
+        if ($order->payment_proof && file_exists(storage_path('app/public/' . $order->payment_proof))) {
+            @unlink(storage_path('app/public/' . $order->payment_proof));
+        }
+
+        // Hapus dari database agar bersih dari riwayat profile user
+        \Illuminate\Support\Facades\DB::table('orders')->where('order_id', $id)->delete();
+
+        return redirect()->back()->with('success', 'Transaksi palsu ditolak dan dihapus.');
     }
+
+    return redirect()->back()->with('error', 'Gagal memproses.');
+}
 
     public function usermanage(Request $request)
     {

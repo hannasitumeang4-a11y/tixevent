@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule; // Tambahan untuk validasi email unik
 
 class AuthController extends Controller
 {
@@ -54,7 +55,7 @@ class AuthController extends Controller
 
             // Jika Organizer masuk ke Dashboard Organizer
             if ($user->role === 'organizer') {
-                return redirect()->route('organizer.dashboard'); // Pastikan Anda nanti membuat nama route ini
+                return redirect()->route('organizer.dashboard'); 
             }
 
             // Jika Customer (pembeli) masuk ke halaman utama / landing page
@@ -73,5 +74,41 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('home');
+    }
+
+    // UPDATE PROFILE (Fungsi Baru untuk Halaman Akun)
+    public function updateProfile(Request $request)
+    {
+        $user = auth()->user();
+
+        // 1. Validasi inputan form dari Halaman Akun
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                // Cek agar email tidak dipakai user lain, abaikan jika email itu milik user ini sendiri
+                // CATATAN: Jika nama primary key di database kamu 'id' (bukan 'user_id'), ganti kata 'user_id' di bawah ini menjadi 'id'
+                Rule::unique('users', 'email')->ignore($user->user_id, 'user_id'),
+            ],
+            // Password opsional, tapi kalau diisi minimal 6 karakter
+            'password' => 'nullable|min:6|confirmed', 
+        ]);
+
+        // 2. Timpa data lama dengan data baru
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+        // 3. Jika form ganti password diisi, enkripsi dan simpan
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        // 4. Simpan perubahan
+        $user->save();
+
+        // 5. Kembalikan ke halaman profil dengan notifikasi sukses
+        return redirect()->route('profile')->with('success', 'Berhasil! Data profil dan pengaturan akun Anda sudah diperbarui.');
     }
 }

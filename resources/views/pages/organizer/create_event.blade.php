@@ -27,7 +27,7 @@
             <div class="mb-4">
                 <label class="block mb-1 text-sm text-gray-300">Kategori Event</label>
                 <select name="category_id" class="w-full bg-[#0b0c10] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 cursor-pointer" required>
-                    <option value="" disabled selected>-- Pilih Kategori Event --</option>
+                    <option value="" disabled {{ old('category_id') ? '' : 'selected' }}>-- Pilih Kategori Event --</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->category_id }}" {{ old('category_id') == $category->category_id ? 'selected' : '' }}>
                             {{ $category->name }}
@@ -42,21 +42,39 @@
             </div>
 
             <div class="bg-[#0b0c10]/50 border border-white/5 rounded-xl p-4 mb-4">
-                <p class="text-xs font-semibold text-purple-400 uppercase tracking-wider mb-3">Pengaturan Harga Kategori Tiket</p>
+                <p class="text-xs font-semibold text-purple-400 uppercase tracking-wider mb-3">Pengaturan Harga & Stok Tiket</p>
                 
-                <div class="mb-3">
-                    <label class="block mb-1 text-xs text-gray-400">Harga Tiket VIP (Rupiah)</label>
-                    <input type="number" name="price_vip" value="{{ old('price_vip') }}" class="w-full bg-[#0b0c10] border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-purple-500 text-sm" placeholder="Contoh: 750000" min="0" required>
+                <div class="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <label class="block mb-1 text-xs text-gray-400">Harga VIP (Rp)</label>
+                        <input type="number" name="price_vip" value="{{ old('price_vip') }}" class="w-full bg-[#0b0c10] border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-purple-500 text-sm" placeholder="Contoh: 750000" min="0" required>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-xs text-gray-400">Stok VIP</label>
+                        <input type="number" name="stock_vip" value="{{ old('stock_vip') }}" class="w-full bg-[#0b0c10] border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-purple-500 text-sm" placeholder="Contoh: 50" min="1" required>
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="block mb-1 text-xs text-gray-400">Harga Tiket REGULAR (Rupiah)</label>
-                    <input type="number" name="price_regular" value="{{ old('price_regular') }}" class="w-full bg-[#0b0c10] border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-purple-500 text-sm" placeholder="Contoh: 500000" min="0" required>
+                <div class="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <label class="block mb-1 text-xs text-gray-400">Harga REGULAR (Rp)</label>
+                        <input type="number" name="price_regular" value="{{ old('price_regular') }}" class="w-full bg-[#0b0c10] border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-purple-500 text-sm" placeholder="Contoh: 500000" min="0" required>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-xs text-gray-400">Stok REGULAR</label>
+                        <input type="number" name="stock_regular" value="{{ old('stock_regular') }}" class="w-full bg-[#0b0c10] border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-purple-500 text-sm" placeholder="Contoh: 150" min="1" required>
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block mb-1 text-xs text-gray-400">Harga Tiket PRESALE (Rupiah)</label>
-                    <input type="number" name="price_presale" value="{{ old('price_presale') }}" class="w-full bg-[#0b0c10] border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-purple-500 text-sm" placeholder="Contoh: 350000" min="0" required>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block mb-1 text-xs text-gray-400">Harga PRESALE (Rp)</label>
+                        <input type="number" name="price_presale" value="{{ old('price_presale') }}" class="w-full bg-[#0b0c10] border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-purple-500 text-sm" placeholder="Contoh: 350000" min="0" required>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-xs text-gray-400">Stok PRESALE</label>
+                        <input type="number" name="stock_presale" value="{{ old('stock_presale') }}" class="w-full bg-[#0b0c10] border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-purple-500 text-sm" placeholder="Contoh: 100" min="1" required>
+                    </div>
                 </div>
             </div>
 

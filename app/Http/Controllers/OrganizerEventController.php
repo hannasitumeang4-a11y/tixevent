@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\Category;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon; 
 
 class OrganizerEventController extends Controller
 {
@@ -19,7 +20,6 @@ class OrganizerEventController extends Controller
         $totalEvent = $myEvents->count();
         $recentEvents = Event::where('organizer_id', $organizerId)->latest()->take(5)->get();
 
-        // Hitung total order berstatus 'paid' menggunakan kolom yang tepat
         $totalOrders = DB::table('orders')
             ->where('order_status', 'paid')
             ->whereIn('event_id', function($query) use ($organizerId) {
@@ -27,7 +27,6 @@ class OrganizerEventController extends Controller
             })
             ->count();
 
-        // Hitung total pendapatan langsung dari tabel orders menggunakan total_amount yang valid
         $totalRevenue = DB::table('orders')
             ->where('order_status', 'paid')
             ->whereIn('event_id', function($query) use ($organizerId) {
@@ -35,7 +34,6 @@ class OrganizerEventController extends Controller
             })
             ->sum('total_amount');
 
-        // Hitung total penonton unik (User)
         $totalUsers = DB::table('orders')
             ->where('order_status', 'paid')
             ->whereIn('event_id', function($query) use ($organizerId) {
@@ -71,7 +69,7 @@ class OrganizerEventController extends Controller
         return view('pages.organizer.create_event', compact('categories'));
     }
 
-// 3. PROSES SIMPAN EVENT BARU (FIXED)
+    // 3. PROSES SIMPAN EVENT BARU (FIXED STOCK)
     public function store(Request $request)
     {
         $request->validate([
@@ -79,13 +77,16 @@ class OrganizerEventController extends Controller
             'description'   => 'required|string',
             'location'      => 'required|string',
             'event_date'    => 'required|date',
-            'start_time'    => 'required', // Validasi Jam Mulai wajib diisi
-            'end_time'      => 'required', // Validasi Jam Selesai wajib diisi
-            'category_id'   => 'required|exists:categories,category_id', // Validasi Kategori wajib dipilih
+            'start_time'    => 'required',
+            'end_time'      => 'required',
+            'category_id'   => 'required|exists:categories,category_id',
             'image'         => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'price_vip'     => 'required|numeric|min:0',
+            'stock_vip'     => 'required|integer|min:1',
             'price_regular' => 'required|numeric|min:0',
+            'stock_regular' => 'required|integer|min:1',
             'price_presale' => 'required|numeric|min:0',
+            'stock_presale' => 'required|integer|min:1',
         ]);
 
         $imagePath = null;
@@ -95,7 +96,6 @@ class OrganizerEventController extends Controller
             $imagePath = 'assets/posters/' . $imageName;
         }
 
-        // FIXED: Menangkap input category_id, start_time, dan end_time langsung dari form secara dinamis
         $event = Event::create([
             'organizer_id' => auth()->id(), 
             'title'        => $request->title,
@@ -117,7 +117,11 @@ class OrganizerEventController extends Controller
             ]);
         }
 
-        $this->generateManualTickets($event, $request->price_vip, $request->price_regular, $request->price_presale);
+        $this->generateManualTickets(
+            $event, 
+            $request->price_vip, $request->price_regular, $request->price_presale,
+            $request->stock_vip, $request->stock_regular, $request->stock_presale
+        );
 
         return redirect()->route('organizer.dashboard')->with('success', 'Event baru berhasil diterbitkan!');
     }
@@ -127,7 +131,6 @@ class OrganizerEventController extends Controller
     {
         $event = Event::where('organizer_id', auth()->id())->findOrFail($id);
 
-        // Disesuaikan menggunakan kolom ticket_id dan join tabel orders ke event_tickets secara presisi
         $manifests = DB::table('orders')
             ->join('users', 'orders.user_id', '=', 'users.user_id')
             ->join('event_tickets', 'orders.ticket_id', '=', 'event_tickets.event_ticket_id')
@@ -162,7 +165,7 @@ class OrganizerEventController extends Controller
         return view('pages.organizer.edit_event', compact('event', 'categories'));
     }
 
-   // 6. UPDATE DATA EVENT (FIXED)
+    // 6. UPDATE DATA EVENT (FIXED STOCK)
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -170,29 +173,41 @@ class OrganizerEventController extends Controller
             'description'   => 'required|string',
             'location'      => 'required|string',
             'event_date'    => 'required|date',
-            'start_time'    => 'required', // Validasi Jam Mulai saat edit
-            'end_time'      => 'required', // Validasi Jam Selesai saat edit
-            'category_id'   => 'required|exists:categories,category_id', // Validasi Kategori saat edit
+            'start_time'    => 'required',
+            'end_time'      => 'required',
+            'category_id'   => 'required|exists:categories,category_id',
             'image'         => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'price_vip'     => 'required|numeric|min:0',
+            'stock_vip'     => 'required|integer|min:1',
             'price_regular' => 'required|numeric|min:0',
+            'stock_regular' => 'required|integer|min:1',
             'price_presale' => 'required|numeric|min:0',
+            'stock_presale' => 'required|integer|min:1',
         ]);
 
         $event = Event::where('organizer_id', auth()->id())->findOrFail($id);
 
         if ($request->hasFile('image')) {
-            if ($event->images && $event->images->first() && file_exists(public_path($event->images->first()->image_path))) {
-                @unlink(public_path($event->images->first()->image_path));
-                $event->images->first()->delete();
+            $oldImage = method_exists($event, 'images') ? $event->images()->first() : null;
+            
+            if ($oldImage) {
+                if (file_exists(public_path($oldImage->image_path))) {
+                    @unlink(public_path($oldImage->image_path));
+                }
+                $oldImage->delete();
             }
 
             $imageName = time() . '_' . Str::slug($request->title) . '.' . $request->image->extension();
             $request->image->move(public_path('assets/posters'), $imageName);
-            $event->images()->create(['image_path' => 'assets/posters/' . $imageName]);
+            
+            if (method_exists($event, 'images')) {
+                $event->images()->create([
+                    'image_path' => 'assets/posters/' . $imageName,
+                    'is_primary' => 1
+                ]);
+            }
         }
 
-        // FIXED: Sinkronisasi pembaruan kategori dan jam pelaksanaan
         $event->update([
             'title'       => $request->title,
             'slug'        => Str::slug($request->title),
@@ -207,19 +222,25 @@ class OrganizerEventController extends Controller
         ]);
 
         DB::table('event_tickets')->where('event_id', $event->event_id)->delete();
-        $this->generateManualTickets($event, $request->price_vip, $request->price_regular, $request->price_presale);
+        
+        $this->generateManualTickets(
+            $event, 
+            $request->price_vip, $request->price_regular, $request->price_presale,
+            $request->stock_vip, $request->stock_regular, $request->stock_presale
+        );
 
         return redirect()->route('organizer.dashboard')->with('success', 'Data konser berhasil diperbarui!');
     }
-    // 7. SUBSISTEM GENERATE TIKET
-    private function generateManualTickets($event, $vipPrice, $regularPrice, $presalePrice)
+
+    // 7. SUBSISTEM GENERATE TIKET (Stok Dinamis Diterapkan)
+    private function generateManualTickets($event, $vipPrice, $regularPrice, $presalePrice, $vipStock, $regularStock, $presaleStock)
     {
         $ticketCategories = [
             [
                 'event_id'          => $event->event_id,
                 'ticket_type'       => 'VIP',
                 'price'             => (float) $vipPrice, 
-                'stock'             => 50,
+                'stock'             => (int) $vipStock, // <-- Stok dinamis
                 'max_buy_per_order' => 5,
                 'status'            => 'available',
                 'created_at'        => now(),
@@ -229,7 +250,7 @@ class OrganizerEventController extends Controller
                 'event_id'          => $event->event_id,
                 'ticket_type'       => 'REGULAR',
                 'price'             => (float) $regularPrice, 
-                'stock'             => 150,
+                'stock'             => (int) $regularStock, // <-- Stok dinamis
                 'max_buy_per_order' => 5,
                 'status'            => 'available',
                 'created_at'        => now(),
@@ -239,7 +260,7 @@ class OrganizerEventController extends Controller
                 'event_id'          => $event->event_id,
                 'ticket_type'       => 'PRESALE',
                 'price'             => (float) $presalePrice, 
-                'stock'             => 100,
+                'stock'             => (int) $presaleStock, // <-- Stok dinamis
                 'max_buy_per_order' => 3,
                 'status'            => 'available',
                 'created_at'        => now(),
@@ -294,7 +315,7 @@ class OrganizerEventController extends Controller
                     $item->ticket_type,
                     $item->quantity . 'x',
                     'Rp ' . number_format($item->subtotal, 0, ',', '.'),
-                    \Carbon\Carbon::parse($item->created_at)->format('d M Y, H:i')
+                    Carbon::parse($item->created_at)->format('d M Y, H:i')
                 ]);
             }
 
@@ -309,19 +330,18 @@ class OrganizerEventController extends Controller
     {
         $event = Event::where('organizer_id', auth()->id())->findOrFail($id);
 
-        // Hapus file gambar poster fisik jika ada
-        if ($event->images && $event->images->first()) {
-            $imagePath = public_path($event->images->first()->image_path);
-            if (file_exists($imagePath)) {
-                @unlink($imagePath);
+        if (method_exists($event, 'images')) {
+            $oldImage = $event->images()->first();
+            if ($oldImage) {
+                $imagePath = public_path($oldImage->image_path);
+                if (file_exists($imagePath)) {
+                    @unlink($imagePath);
+                }
+                $event->images()->delete();
             }
-            $event->images()->delete();
         }
 
-        // Hapus relasi tiket manual
         DB::table('event_tickets')->where('event_id', $event->event_id)->delete();
-
-        // Hapus data event utama
         $event->delete();
 
         return redirect()->route('organizer.dashboard')->with('success', 'Event berhasil dihapus secara permanen!');
